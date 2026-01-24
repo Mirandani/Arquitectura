@@ -27,6 +27,7 @@ tarea_01/
     ├── item_categories.csv   # Categorías de los productos
     ├── shops.csv             # Información de las tiendas
     └── test.csv              # Datos para realizar las predicciones
+├── submission.csv            # Predicciones    
 ├── pyproject.toml            # Archivo de configuración de uv
 ├── uv.lock                   # Archivo de bloqueo de dependencias de uv
 ```
@@ -42,10 +43,25 @@ uv run jupyter lab
 ## Resumen
 Se evaluaron dos modelos de machine learning: **regresión lineal  y random forest** para el prónostico de inventarios buscando obtener un RMSE < 5 unidades.
 
+## EDA
+- Rango temporal: Enero 2013 - Octubre 2015 (34 meses)
+- Volumen de datos: 2.9M transacciones después de limpieza
+- Outliers removidos: Precios > 100,000 y cantidades > 1,000
+- Devoluciones: 0.25% del total
+- Estacionalidad detectada: Picos en diciembre (temporada navideña)
+
 ## Relevantes
 
 - **Modelo ganador**: Random forest
 - **RMSE obtenidio**: 0.9743 unidades
+- **Hiperparametros:**
+```
+RandomForestRegressor(
+    n_estimators=50, 
+    max_depth=10, 
+    random_state=42
+)
+```
 
 ## Kaggle
 Score: 1.02184
