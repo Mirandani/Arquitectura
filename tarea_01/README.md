@@ -21,7 +21,14 @@ tarea_01/
 ├── modelo_retail.ipynb       # Notebook con EDA, Modelado y predicción de demanda 
 ├── Executive Sumary.pdf      # Resumen ejecutivo para stakeholders (https://github.com/Mirandani/Arquitectura/blob/main/tarea_01/Executive%20Summary.pdf)
 ├── README.md                 # Documentación del proyecto                   
-│   
+│── data/                    # Carpeta con datasets
+    ├── sales_train.csv       # Datos históricos de ventas
+    ├── items.csv             # Información de los productos
+    ├── item_categories.csv   # Categorías de los productos
+    ├── shops.csv             # Información de las tiendas
+    └── test.csv              # Datos para realizar las predicciones
+├── pyproject.toml            # Archivo de configuración de uv
+├── uv.lock                   # Archivo de bloqueo de dependencias de uv
 ```
 
 ## Ejecución del Proyecto con uv
@@ -32,13 +39,17 @@ cd tarea_01
 uv sync
 uv run jupyter lab
 ```
-## Resu,en
+## Resumen
 Se evaluaron dos modelos de machine learning: **regresión lineal  y random forest** para el prónostico de inventarios buscando obtener un RMSE < 5 unidades.
 
 ## Relevantes
 
 - **Modelo ganador**: Random forest
 - **RMSE obtenidio**: 0.9743 unidades
+
+## Kaggle
+Score: 1.02184
+![alt text](image.png)
 
 ## Contenido
 
@@ -47,3 +58,5 @@ Se evaluaron dos modelos de machine learning: **regresión lineal  y random fore
   - Ingeniería de variables, modelado y predicción
 2. Executive Sumary.pdf
   - Resumen ejecutivo para stakeholders
+
+
