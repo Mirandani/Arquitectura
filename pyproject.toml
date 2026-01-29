@@ -9,5 +9,6 @@ dependencies = [
     "jupyterlab>=4.5.3",
     "numpy>=2.4.1",
     "pandas>=3.0.0",
+    "pyarrow>=23.0.0",
     "scikit-learn>=1.8.0",
 ]

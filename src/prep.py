@@ -3,9 +3,7 @@ La entrada del script son datos data/raw. La salida del script son datos data/pr
 Este modulo sirve para hacer las transformaciones necesarias para dejar los datos listos para el analisis exploratorio y modelado.
 """
 
-import os
 import pandas as pd
-from sklearn.model_selection import train_test_split
 import numpy as np
 
 
@@ -29,10 +27,10 @@ train['date'] = pd.to_datetime(train['date'], format='%d.%m.%Y')
 
 # Verificación
 print("filas y columnas train",train.shape)
-train.head()
+print(train.head())
 
 pd.set_option('display.float_format', lambda x: '%.2f' % x)
-train.describe()
+print(train.describe())
 
 # Conteo nulos 
 print("Valores nulos")
@@ -243,8 +241,7 @@ print(f"Porcentaje sin ventas: {porcentaje_sin_ventas:.2f}%")
 
 
 
-# Cargar test.csv
-test = pd.read_csv('data/raw/test.csv')
+# Preparar test para unión con matriz
 test['date_block_num'] = 34
 test['date_block_num'] = test['date_block_num'].astype(np.int8)
 test['shop_id'] = test['shop_id'].astype(np.int8)
@@ -281,7 +278,12 @@ datos_validacion = matriz[matriz.date_block_num == 33]
 datos_prueba_final = matriz[matriz.date_block_num == 34]
 
 # La salida del script son datos data/prep 
-datos_entreno.to_csv('data/prep/datos_entreno.csv', index=False)
-datos_validacion.to_csv('data/prep/datos_validacion.csv', index=False)
-datos_prueba_final.to_csv('data/prep/datos_prueba_final.csv', index=False)
 
+datos_entreno.to_parquet('data/prep/datos_entreno.parquet', index=False)
+datos_validacion.to_parquet('data/prep/datos_validacion.parquet', index=False)
+datos_prueba_final.to_parquet('data/prep/datos_prueba_final.parquet', index=False)
+
+print(f"\nDatasets generados exitosamente:")
+print(f"- Entrenamiento: {datos_entreno.shape}")
+print(f"- Validación: {datos_validacion.shape}")
+print(f"- Prueba final: {datos_prueba_final.shape}")
