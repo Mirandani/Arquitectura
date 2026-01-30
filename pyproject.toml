@@ -1,12 +1,14 @@
 [project]
 name = "arquitectura"
 version = "0.1.0"
-description = "Add your description here"
+description = "Repositorio para la metodos de gran escala"
 readme = "README.md"
-requires-python = ">=3.14"
+requires-python = ">=3.12"
 dependencies = [
+    "boto3>=1.42.34",
     "jupyterlab>=4.5.3",
     "numpy>=2.4.1",
     "pandas>=3.0.0",
+    "pyarrow>=23.0.0",
     "scikit-learn>=1.8.0",
 ]
