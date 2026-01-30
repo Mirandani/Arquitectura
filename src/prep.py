@@ -279,6 +279,10 @@ def historia(datos, meses_atras, columna_base):
 matriz = historia(matriz, [1, 2, 3, 12], 'item_cnt_month')
 matriz = matriz.fillna(0)
 
+##### GUARDANDO DATASETS 
+""""""
+
+
 ######### 
 # División de datos
 print("Generando datasets de entrenamiento, validación y prueba final...")
@@ -290,7 +294,7 @@ datos_prueba_final = matriz[matriz.date_block_num == 34]
 
 datos_entreno.to_parquet('data/prep/datos_entreno.parquet', index=False)
 datos_validacion.to_parquet('data/prep/datos_validacion.parquet', index=False)
-datos_prueba_final.to_parquet('data/prep/datos_prueba_final.parquet', index=False)
+datos_prueba_final.to_parquet('data/inference/datos_inferencia.parquet', index=False)
 
 print(f"\nDatasets generados exitosamente:")
 print(f"- Entrenamiento: {datos_entreno.shape}")

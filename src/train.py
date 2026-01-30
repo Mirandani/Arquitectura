@@ -18,7 +18,7 @@ import joblib
 # Read data from data/prep/...
 datos_entreno = pd.read_parquet('data/prep/datos_entreno.parquet')
 datos_validacion = pd.read_parquet('data/prep/datos_validacion.parquet')
-datos_prueba_final = pd.read_parquet('data/prep/datos_prueba_final.parquet')
+#datos_prueba_final = pd.read_parquet('data/prep/datos_prueba_final.parquet')
 
 
 X_entreno = datos_entreno.drop(['item_cnt_month'], axis=1)
@@ -27,7 +27,7 @@ Y_entreno = datos_entreno['item_cnt_month']
 X_validacion = datos_validacion.drop(['item_cnt_month'], axis=1)
 Y_validacion = datos_validacion['item_cnt_month']
 
-X_prueba = datos_prueba_final.drop(['item_cnt_month'], axis=1)
+#X_prueba = datos_prueba_final.drop(['item_cnt_month'], axis=1)
 
 
 # Entrenamiento del modelo
@@ -51,5 +51,6 @@ print(f"RMSE Random Forest: {error_forest:.4f}")
 
 # save model joblib model.joblib
 print("Guardando el modelo entrenado...")
-joblib.dump(modelo_forest, 'models/modelo_random_forest.joblib')
-print("Modelo guardado exitosamente en 'models/modelo_random_forest.joblib'")
+# guardando en artifacts/models/modelo_random_forest.joblib
+joblib.dump(modelo_forest, 'artifacts/models/modelo_random_forest.joblib')
+print("Modelo guardado exitosamente en 'artifacts/models/modelo_random_forest.joblib'")
