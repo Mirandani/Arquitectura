@@ -6,6 +6,9 @@ Este modulo sirve para hacer las transformaciones necesarias para dejar los dato
 import pandas as pd
 import numpy as np
 
+###########################################################################
+# CARGA DE DATOS
+###########################################################################
 
 # Lectura de datos
 train = pd.read_csv('data/raw/sales_train.csv')
@@ -73,8 +76,10 @@ plt.show()
 # Revisión de precios
 #train.sort_values("item_price", ascending=False).head(15)
 
-###############################
-# Limpieza valores atípicos
+###########################################################################
+# LIMPIEZA DE DATOS
+###########################################################################
+print("Limpieza de datos...")
 
 # Eliminar precios negativos
 train = train[train['item_price'] > 0]
@@ -82,15 +87,13 @@ train = train[train['item_price'] > 0]
 # Eliminar precios muy altos
 train = train[train['item_price'] < 100000]
 
-#Eliminar número de unidades vendidas muy altas
+# Eliminar número de unidades vendidas muy altas
 train = train[train['item_cnt_day'] < 1000]
 
-
-## Devoluciones 
+# Devoluciones 
 #print(" % devoluciones:", (train[train['item_cnt_day'] < 0].shape[0] / train.shape[0]) * 100)
 
 # Duplicados 
-
 print("Duplicados:", train.duplicated().sum())
 train = train.drop_duplicates()
 
@@ -98,7 +101,10 @@ print("Filas y columnas después de limpieza", train.shape)
 
 
 
-###########################
+##############################################################
+#  analisis exploratorio
+##############################################################
+
 # Revisión de tiendas abiertas 
 sales_by_shop = train.pivot_table(index='shop_id', columns='date_block_num', values='item_cnt_day', aggfunc='sum')
 
@@ -195,8 +201,9 @@ items_test = set(test['item_id'].unique())
 print("Productos nuevos en test:", len(items_test - items_train))
 
 
-###############
+###########################################################################
 # CONSOLIDACIÓN DE INFORMACIÓN MES-> TIENDA -> PRODUCTO -> VENTAS
+###########################################################################
 from itertools import product
 
 # Matriz mes-tienda-item
@@ -239,7 +246,9 @@ print(f"Total de combinaciones Mes-Tienda-Producto: {total}")
 print(f"Combinaciones con 0 ventas: {ceros}")
 print(f"Porcentaje sin ventas: {porcentaje_sin_ventas:.2f}%")
 
-
+###########################################################################
+#.   MATRIZ MES TIENDA PRODUCTO + TEST + HISTORIA
+###########################################################################
 
 # Preparar test para unión con matriz
 test['date_block_num'] = 34
