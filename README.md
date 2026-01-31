@@ -5,7 +5,7 @@
 
 **Blanca Azucena Orduña López**
 
-**Daniel Miranda Badillo*
+**Daniel Miranda Badillo**
 
 Repositorio de proyectos del curso Métodos de Gran Escala 
 
