@@ -9,6 +9,50 @@ from itertools import product
 import pandas as pd
 import numpy as np
 
+# Funciones
+
+# función para generar la matriz base de mes-tienda-item
+def generar_grid_base(df_entrenamiento):
+    """Genera todas las combinaciones posibles de mes-tienda-item."""
+    grid = []
+    cols = ['date_block_num', 'shop_id', 'item_id']
+    
+    # Usamos el máximo mes en los datos + iteramos
+    meses = df_entrenamiento['date_block_num'].unique()
+    
+    for i in meses:
+        ventas = df_entrenamiento[df_entrenamiento.date_block_num == i]
+        grid.append(np.array(list(product([i], ventas.shop_id.unique(), ventas.item_id.unique())), dtype='int16'))
+    
+    return pd.DataFrame(np.vstack(grid), columns=cols)
+
+
+# función para cambiar tipos de datos
+def optimizar_tipos(df):
+    """Reduce el uso de memoria casteando IDs a enteros pequeños."""
+    return df.assign(
+        date_block_num=lambda x: x['date_block_num'].astype(np.int8),
+        shop_id=lambda x: x['shop_id'].astype(np.int8),
+        item_id=lambda x: x['item_id'].astype(np.int16)
+    )
+
+# función para guardado de datasets parquet
+def guardar_dataset(df, ruta):
+    """Guarda el dataframe en parquet e imprime confirmación."""
+    df.to_parquet(ruta, index=False)
+    print(f"Guardado: {ruta}  Dimensiones: {df.shape}")
+
+# función para agregar historia de ventas
+def agregar_historia(datos, meses_atras, columna_base):
+    df_temp = datos[['date_block_num', 'shop_id', 'item_id', columna_base]]
+    
+    for mes in meses_atras:
+        desplazado = df_temp.copy()
+        desplazado.columns = ['date_block_num', 'shop_id', 'item_id', f"{columna_base}_mes_ant_{mes}"]
+        desplazado['date_block_num'] += mes
+        
+        datos = pd.merge(datos, desplazado, on=['date_block_num', 'shop_id', 'item_id'], how='left')
+    return datos
 
 pd.set_option('display.float_format', lambda x: '%.2f' % x)
 
@@ -210,25 +254,14 @@ print("Productos nuevos en datos_prueba:", len(art_prueba - art_entrenamiento))
 
 
 # matriz_ventas matriz con mes-tienda-item
-matriz_ventas = []
-cols = ['date_block_num', 'shop_id', 'item_id']
-
-for i in range(34):
-    ventas = datos_entrenamiento[datos_entrenamiento.date_block_num == i]
-    matriz_ventas.append(np.array(list(product([i], ventas.shop_id.unique(), ventas.item_id.unique())), dtype='int16'))
-
-# Creamos el df de ventas consolidadas
-matriz_ventas = pd.DataFrame(np.vstack(matriz_ventas), columns=cols)
+matriz_ventas = generar_grid_base(datos_entrenamiento)
 
 matriz_ventas = (
     matriz_ventas
-    .assign(
-        date_block_num=lambda df: df['date_block_num'].astype(np.int8),
-        shop_id=lambda df: df['shop_id'].astype(np.int8),
-        item_id=lambda df: df['item_id'].astype(np.int16)
-    )
-    .sort_values(cols)
+    .pipe(optimizar_tipos)
+    .sort_values(['date_block_num', 'shop_id', 'item_id'])
 )
+
 # Incluimos las ventas por mes
 ventas_agrupadas = (
     datos_entrenamiento
@@ -240,6 +273,9 @@ ventas_agrupadas = (
 # Unimos ventas con matriz
 # Reemplazamos nulos por 0
 # Limitamos a 20 como pide la competencia
+
+cols = ['date_block_num', 'shop_id', 'item_id']
+
 matriz_ventas = (
     pd.merge(matriz_ventas, ventas_agrupadas, on=cols, how='left')
     .assign(
@@ -263,27 +299,12 @@ print(f"Porcentaje sin ventas: {(cnt_ventas_cero / total_filas) * 100:.2f}%")
 # Preparar datos_prueba para unión con matriz
 datos_prueba = (
     pd.read_csv('data/raw/test.csv')
-    .assign(
-        date_block_num=34,
-        date_block_num=lambda df: df['date_block_num'].astype(np.int8),
-        shop_id=lambda df: df['shop_id'].astype(np.int8),
-        item_id=lambda df: df['item_id'].astype(np.int16)
-    )
+    .assign(date_block_num=34)
+    .pipe(optimizar_tipos)
 )
+
 # Unión de datos_prueba con matriz consolidada
 matriz_ventas = pd.concat([matriz_ventas, datos_prueba], ignore_index=True, sort=False).fillna(0)
-
-# Función historia, crear variable de meses anteriores
-def agregar_historia(datos, meses_atras, columna_base):
-    df_temp = datos[['date_block_num', 'shop_id', 'item_id', columna_base]]
-
-    for i in meses_atras:
-        desplazado = df_temp.copy()
-        desplazado.columns = ['date_block_num', 'shop_id', 'item_id', f"{columna_base}_mes_ant_{i}"]
-        desplazado['date_block_num'] += i
-
-        datos = pd.merge(datos, desplazado, on=['date_block_num', 'shop_id', 'item_id'], how='left')
-    return datos
 
 #  GENERACIÓN DE DATASETS ABT
 # variables con número de mes
@@ -297,22 +318,21 @@ matriz_ventas = (
 
 # División de datos
 print("Generando datasets de entrenamiento, validación y prueba final...")
-(
-    matriz_ventas[matriz_ventas.date_block_num < 33]
-    .to_parquet('data/prep/datos_entreno.parquet', index=False)
+guardar_dataset(
+    matriz_ventas[matriz_ventas.date_block_num < 33], 
+    'data/prep/datos_entreno.parquet'
 )
 
-(
-    matriz_ventas[matriz_ventas.date_block_num == 33]
-    .to_parquet('data/prep/datos_validacion.parquet', index=False)
+guardar_dataset(
+    matriz_ventas[matriz_ventas.date_block_num == 33], 
+    'data/prep/datos_validacion.parquet'
 )
 
-(
-    matriz_ventas[matriz_ventas.date_block_num == 34]
-    .to_parquet('data/inference/datos_inferencia.parquet', index=False)
+guardar_dataset(
+    matriz_ventas[matriz_ventas.date_block_num == 34], 
+    'data/inference/datos_inferencia.parquet'
 )
 
-print("\nDatasets generados exitosamente:")
-print("- Entrenamiento (Mes < 33)")
-print("- Validación (Mes == 33)")
-print("- Inferencia (Mes == 34)")
+print("\nProceso finalizado con éxito.")
+
+
