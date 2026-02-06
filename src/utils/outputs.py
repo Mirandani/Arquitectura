@@ -1,7 +1,26 @@
-import pandas as pd
+"""Módulo para operaciones de salida de datos."""
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-# función para guardado de datasets parquet
+
 def guardar_dataset(df, ruta):
-    """Guarda el dataframe en parquet e imprime confirmación."""
-    df.to_parquet(ruta, index=False)
-    print(f"Guardado: {ruta}  Dimensiones: {df.shape}")
+    """Guarda el dataframe en parquet e imprime confirmación.
+
+    Args:
+        df: DataFrame de pandas a guardar.
+        ruta (str): Ruta del archivo parquet donde se guardará el dataset.
+
+    Returns:
+        None
+    """
+    try:
+        df.to_parquet(ruta, index=False)
+        logger.info("Guardado: %s  Dimensiones: %s", ruta, df.shape)
+
+    except Exception as e:
+        logger.error("Error al guardar %s: %s", ruta, e)
+        raise

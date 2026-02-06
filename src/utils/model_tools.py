@@ -1,33 +1,35 @@
 # src/utils/model_tools.py
 """Modulo para generar métricas de evaluación de modelos de machine learning.
 """
-import numpy as np
-from sklearn.metrics import mean_squared_error
 import logging
+import numpy as np
 import joblib
+from sklearn.metrics import mean_squared_error
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
 )
+
 logger = logging.getLogger(__name__)
 
 
 # Función para evaluar el modelo utilizando RMSE
-def evaluar_modelo_rmse(modelo, X_validacion, Y_validacion):
+def evaluar_modelo_rmse(modelo, x_validacion, y_validacion):
     """Evalúa el modelo utilizando RMSE.
     Args:
         modelo: El modelo a evaluar.
-        X_validacion: Las características de validación.
-        Y_validacion: Las etiquetas de validación.
+        x_validacion: Las características de validación.
+        y_validacion: Las etiquetas de validación.
     Returns:
         El valor de RMSE.
     """
     try:
-        prediccion = modelo.predict(X_validacion)
-        error = np.sqrt(mean_squared_error(Y_validacion, prediccion))
+        prediccion = modelo.predict(x_validacion)
+        error = np.sqrt(mean_squared_error(y_validacion, prediccion))
         return error
     except Exception as e:
-        logger.error(f"Error al evaluar el modelo: {e}")
+        logger.error("Error al evaluar el modelo: %s", e)
         raise
 
 
@@ -40,11 +42,11 @@ def guardar_modelo(modelo, ruta):
         None
     """
     try:
-        logger.info(f"Guardando el modelo en '{ruta}'...")
+        logger.info("Guardando el modelo en '%s'...", ruta)
         joblib.dump(modelo, ruta)
-        logger.info(f"Modelo guardado exitosamente en '{ruta}'.")
+        logger.info("Modelo guardado exitosamente en '%s'.", ruta)
     except Exception as e:
-        logger.error(f"Error al guardar el modelo: {e}")
+        logger.error("Error al guardar el modelo: %s", e)
         raise
 
 
@@ -56,12 +58,12 @@ def cargar_modelo(ruta):
         El modelo cargado.
     """
     try:
-        logger.info(f"Cargando el modelo desde '{ruta}'...")
+        logger.info("Cargando el modelo desde '%s'...", ruta)
         modelo = joblib.load(ruta)
-        logger.info(f"Modelo cargado exitosamente desde '{ruta}'.")
+        logger.info("Modelo cargado exitosamente desde '%s'.", ruta)
         return modelo
     except Exception as e:
-        logger.error(f"Error al cargar el modelo: {e}")
+        logger.error("Error al cargar el modelo: %s", e)
         raise
 
 
@@ -75,11 +77,11 @@ def guardar_predicciones(df, columnas, ruta):
         None
     """
     try:
-        logger.info(f"Guardando predicciones en '{ruta}'...")
+        logger.info("Guardando predicciones en '%s'...", ruta)
         df[columnas].to_csv(ruta, index=False)
-        logger.info(f"Predicciones guardadas exitosamente en '{ruta}'.")
+        logger.info("Predicciones guardadas exitosamente en '%s'.", ruta)
     except Exception as e:
-        logger.error(f"Error al guardar las predicciones: {e}")
+        logger.error("Error al guardar las predicciones: %s", e)
         raise
 
 
@@ -93,8 +95,8 @@ def resumen_predicciones(predicciones):
             'min': np.min(predicciones),
             'max': np.max(predicciones)
         }
-        logger.info(f"Resumen de predicciones: {resumen}")
+        logger.info("Resumen de predicciones: %s", resumen)
         return resumen
     except Exception as e:
-        logger.error(f"Error al generar el resumen de predicciones: {e}")
+        logger.error("Error al generar el resumen de predicciones: %s", e)
         raise

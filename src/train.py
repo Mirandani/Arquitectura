@@ -79,7 +79,8 @@ guardar_modelo(modelo_random_forest, PATH_MODELO_ENTRENADO)
 
 
 def main():
-    """Función principal que orquesta el proceso de entrenamiento del modelo."""
+    """Función principal que orquesta el proceso de entrenamiento del modelo.
+    """
     logger.info("Inicio del proceso de entrenamiento de modelo.")
     # Aquí se podría agregar más lógica si es necesario
     logger.info("Proceso de entrenamiento de modelo finalizado.")
