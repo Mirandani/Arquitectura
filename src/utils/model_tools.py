@@ -5,7 +5,10 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 import logging
 import joblib
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 
@@ -59,4 +62,39 @@ def cargar_modelo(ruta):
         return modelo
     except Exception as e:
         logger.error(f"Error al cargar el modelo: {e}")
+        raise
+
+
+def guardar_predicciones(df, columnas, ruta):
+    """Guarda predicciones en CSV e imprime confirmación.
+    Args:
+        df: DataFrame que contiene las predicciones.
+        columnas: Lista de columnas a guardar.
+        ruta: Ruta del archivo CSV donde se guardarán las predicciones.
+    Returns:
+        None
+    """
+    try:
+        logger.info(f"Guardando predicciones en '{ruta}'...")
+        df[columnas].to_csv(ruta, index=False)
+        logger.info(f"Predicciones guardadas exitosamente en '{ruta}'.")
+    except Exception as e:
+        logger.error(f"Error al guardar las predicciones: {e}")
+        raise
+
+
+def resumen_predicciones(predicciones):
+    """Genera estadísticas descriptivas de las predicciones."""
+    try:
+        logger.info("Generando resumen de predicciones...")
+        resumen = {
+            'media': np.mean(predicciones),
+            'mediana': np.median(predicciones),
+            'min': np.min(predicciones),
+            'max': np.max(predicciones)
+        }
+        logger.info(f"Resumen de predicciones: {resumen}")
+        return resumen
+    except Exception as e:
+        logger.error(f"Error al generar el resumen de predicciones: {e}")
         raise

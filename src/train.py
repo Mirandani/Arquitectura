@@ -16,7 +16,10 @@ from src.utils.model_tools import evaluar_modelo_rmse, guardar_modelo
 
 # Configuración de logging
 import logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
 # Constantes
@@ -54,9 +57,9 @@ logger.info(f"RMSE Regresión Lineal: {error_lineal:.4f}")
 # Entrenamiento del modelo Random Forest
 modelo_random_forest = (
     RandomForestRegressor(
-        n_estimators=50, 
-        max_depth=10, 
-        random_state=42, 
+        n_estimators=50,
+        max_depth=10,
+        random_state=42,
         n_jobs=-1)
     )
 logger.info("Iniciando el entrenamiento del modelo Random Forest...")
@@ -65,8 +68,8 @@ modelo_random_forest.fit(X_entreno, Y_entreno)
 # Evaluación del modelo Random Forest
 error_random_forest = (
     evaluar_modelo_rmse(
-        modelo_random_forest, 
-        X_validacion, 
+        modelo_random_forest,
+        X_validacion,
         Y_validacion)
     )
 logger.info(f"RMSE Random Forest: {error_random_forest:.4f}")

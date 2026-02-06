@@ -1,32 +1,55 @@
-"""
-La entrada de este script son datos data/inference y el modelo entrenado model.joblib.
-La salida de este script son predicciones en batch que se guardan en data/predictions.
+# src/inference.py
+""" Módulo para realizar inferencia utilizando un modelo de ML entrenado.
+
+La entrada de este script son:
+    - data/inference/datos_inferencia.parquet.
+    - modelo entrenado en: modelo_random_forest.joblib.
+La salida de este script son predicciones en batch que se guardan en:
+    - data/predictions/predicciones_batch.csv
 """
 
 import pandas as pd
-import numpy as np  
-import joblib
+
+from src.utils.model_tools import (
+    cargar_modelo,
+    guardar_predicciones,
+    resumen_predicciones,
+)
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# Constantes
+RUTA_MODELO_ENTRENADO = 'artifacts/models/modelo_random_forest.joblib'
+RUTA_DATOS_INFERENCIA = 'data/inference/datos_inferencia.parquet'
+RUTA_PREDICCIONES = 'data/predictions/predicciones_batch.csv'
 
 # Cargar datos de inferencia
-datos_inferencia = pd.read_parquet('data/inference/datos_inferencia.parquet')
+datos_inferencia = pd.read_parquet(RUTA_DATOS_INFERENCIA)
 datos_inferencia = datos_inferencia.drop(['item_cnt_month'], axis=1)
 
 # Cargar el modelo entrenado
-modelo_cargado = joblib.load('artifacts/models/modelo_random_forest.joblib')
-print("Modelo cargado exitosamente.")
+modelo_entrenado = cargar_modelo(RUTA_MODELO_ENTRENADO)
 
 # Realizar predicciones batch
-print("Realizando predicciones...")
-predicciones = modelo_cargado.predict(datos_inferencia) 
+logger.info("Realizando predicciones...")
+predicciones = modelo_entrenado.predict(datos_inferencia)
 # Agregar predicciones al DataFrame
 datos_inferencia['item_cnt_month_pred'] = predicciones
 
-# Guardar las predicciones en data/predictions
-datos_inferencia[['ID', 'item_cnt_month_pred']].to_csv('data/predictions/predicciones_batch.csv', index=False)
-print("Predicciones guardadas en 'data/predictions/predicciones_batch.csv'.")   
+guardar_predicciones(
+    datos_inferencia,
+    ['ID', 'item_cnt_month_pred'],
+    RUTA_PREDICCIONES
+)
 
-print(datos_inferencia.head())
-
-#metricas de resumen
-print("Resumen de predicciones:")
-print(f"Predicciones - media: {np.mean(predicciones):.2f}, mediana: {np.median(predicciones):.2f}, min: {np.min(predicciones):.2f}, max: {np.max(predicciones):.2f}")
+# metricas de resumen
+resumen = resumen_predicciones(predicciones)
+logger.info(
+    f"Predicciones - media: {resumen['media']:.2f}, "
+    f"mediana: {resumen['mediana']:.2f}, "
+    f"min: {resumen['min']:.2f}, max: {resumen['max']:.2f}"
+)
