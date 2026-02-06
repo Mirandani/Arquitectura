@@ -1,56 +1,86 @@
-"""
-src/train.py
-    La entrada del script son datos data/prep. 
-    La salida del script es un modelo entrenado. 
-    Puedes checar el código de este blog Save and Load Machine Learning Models in Python with scikit-learn
+# src/train.py
+""" Módulo para entrenamiento de modelo de machine learning.
+
+    La entrada del script son:
+        - data/prep/datos_entreno.parquet
+        - data/prep/datos_validacion.parquet
+    La salida del script es un modelo entrenado:
+        - artifacts/models/modelo_random_forest.joblib
 """
 
 import pandas as pd
-import numpy as np
-from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.metrics import mean_squared_error
-import joblib
 
+from src.utils.model_tools import evaluar_modelo_rmse, guardar_modelo
 
-# Read data from data/prep/...
-datos_entreno = pd.read_parquet('data/prep/datos_entreno.parquet')
-datos_validacion = pd.read_parquet('data/prep/datos_validacion.parquet')
-#datos_prueba_final = pd.read_parquet('data/prep/datos_prueba_final.parquet')
+# Configuración de logging
+import logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
+# Constantes
+PATH_DATOS_ENTRENAMIENTO = 'data/prep/datos_entreno.parquet'
+PATH_DATOS_VALIDACION = 'data/prep/datos_validacion.parquet'
+PATH_MODELO_ENTRENADO = 'artifacts/models/modelo_random_forest.joblib'
 
-X_entreno = datos_entreno.drop(['item_cnt_month'], axis=1)
-Y_entreno = datos_entreno['item_cnt_month']
+#  Carga de datos de entrenamiento y validación
+datos_entrenamiento = pd.read_parquet(PATH_DATOS_ENTRENAMIENTO)
+datos_validacion = pd.read_parquet(PATH_DATOS_VALIDACION)
+# datos_prueba_final = pd.read_parquet('data/prep/datos_prueba_final.parquet')
 
+# Preparación de datos para entrenamiento
+X_entreno = datos_entrenamiento.drop(['item_cnt_month'], axis=1)
+Y_entreno = datos_entrenamiento['item_cnt_month']
+
+# Preparación de datos para validación
 X_validacion = datos_validacion.drop(['item_cnt_month'], axis=1)
 Y_validacion = datos_validacion['item_cnt_month']
 
-#X_prueba = datos_prueba_final.drop(['item_cnt_month'], axis=1)
-
-
-# Entrenamiento del modelo
-print("Entrenando el modelo...")
-# REGRESIÓN LINEAL
+# Entrenamiento del modelo de regresion lineal
 modelo_lineal = LinearRegression()
+logger.info("Iniciando el entrenamiento del modelo de regresión lineal...")
 modelo_lineal.fit(X_entreno, Y_entreno)
 
-# Evaluación del modelo
-prediccion_lineal = modelo_lineal.predict(X_validacion)
-error_lineal = np.sqrt(mean_squared_error(Y_validacion, prediccion_lineal))
-print(f"RMSE Regresión Lineal: {error_lineal:.4f}")
+# Evaluación del modelo de regresión lineal
+error_lineal = (
+    evaluar_modelo_rmse(
+        modelo_lineal,
+        X_validacion,
+        Y_validacion)
+    )
+logger.info(f"RMSE Regresión Lineal: {error_lineal:.4f}")
 
-# RANDOM FOREST
-modelo_forest = RandomForestRegressor(n_estimators=50, max_depth=10, random_state=42, n_jobs=-1)
-modelo_forest.fit(X_entreno, Y_entreno)
+# Entrenamiento del modelo Random Forest
+modelo_random_forest = (
+    RandomForestRegressor(
+        n_estimators=50, 
+        max_depth=10, 
+        random_state=42, 
+        n_jobs=-1)
+    )
+logger.info("Iniciando el entrenamiento del modelo Random Forest...")
+modelo_random_forest.fit(X_entreno, Y_entreno)
 
-prediccion_forest = modelo_forest.predict(X_validacion)
-error_forest = np.sqrt(mean_squared_error(Y_validacion, prediccion_forest))
-print(f"RMSE Random Forest: {error_forest:.4f}")
+# Evaluación del modelo Random Forest
+error_random_forest = (
+    evaluar_modelo_rmse(
+        modelo_random_forest, 
+        X_validacion, 
+        Y_validacion)
+    )
+logger.info(f"RMSE Random Forest: {error_random_forest:.4f}")
 
-# save model joblib model.joblib
-print("Guardando el modelo entrenado...")
-# guardando en artifacts/models/modelo_random_forest.joblib
-joblib.dump(modelo_forest, 'artifacts/models/modelo_random_forest.joblib')
-print("Modelo guardado exitosamente en 'artifacts/models/modelo_random_forest.joblib'")
+
+# Guardado del modelo entrenado
+guardar_modelo(modelo_random_forest, PATH_MODELO_ENTRENADO)
+
+
+def main():
+    logger.info("Inicio del proceso de entrenamiento de modelo.")
+    # Aquí se podría agregar más lógica si es necesario
+    logger.info("Proceso de entrenamiento de modelo finalizado.")
+
+
+if __name__ == "__main__":
+    main()
