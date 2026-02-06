@@ -7,15 +7,14 @@ La entrada de este script son:
 La salida de este script son predicciones en batch que se guardan en:
     - data/predictions/predicciones_batch.csv
 """
-
+import logging
 import pandas as pd
-
 from src.utils.model_tools import (
     cargar_modelo,
     guardar_predicciones,
     resumen_predicciones,
 )
-import logging
+
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -49,7 +48,9 @@ guardar_predicciones(
 # metricas de resumen
 resumen = resumen_predicciones(predicciones)
 logger.info(
-    f"Predicciones - media: {resumen['media']:.2f}, "
-    f"mediana: {resumen['mediana']:.2f}, "
-    f"min: {resumen['min']:.2f}, max: {resumen['max']:.2f}"
+    "Predicciones - media: %.2f, mediana: %.2f, min: %.2f, max: %.2f",
+    resumen['media'],
+    resumen['mediana'],
+    resumen['min'],
+    resumen['max']
 )

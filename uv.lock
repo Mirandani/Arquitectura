@@ -90,6 +90,11 @@ dependencies = [
     { name = "scikit-learn" },
 ]
 
+[package.dev-dependencies]
+dev = [
+    { name = "pylint" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "black", specifier = ">=26.1.0" },
@@ -101,6 +106,9 @@ requires-dist = [
     { name = "pylint", specifier = ">=4.0.4" },
     { name = "scikit-learn", specifier = ">=1.8.0" },
 ]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pylint", specifier = ">=4.0.4" }]
 
 [[package]]
 name = "arrow"

@@ -8,14 +8,13 @@
         - artifacts/models/modelo_random_forest.joblib
 """
 
+import logging
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-
 from src.utils.model_tools import evaluar_modelo_rmse, guardar_modelo
 
 # Configuración de logging
-import logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(levelname)s - %(message)s'
@@ -52,7 +51,7 @@ error_lineal = (
         X_validacion,
         Y_validacion)
     )
-logger.info(f"RMSE Regresión Lineal: {error_lineal:.4f}")
+logger.info("RMSE Regresión Lineal: %.4f", error_lineal)
 
 # Entrenamiento del modelo Random Forest
 modelo_random_forest = (
@@ -72,7 +71,7 @@ error_random_forest = (
         X_validacion,
         Y_validacion)
     )
-logger.info(f"RMSE Random Forest: {error_random_forest:.4f}")
+logger.info("RMSE Random Forest: %.4f", error_random_forest)
 
 
 # Guardado del modelo entrenado
@@ -80,6 +79,7 @@ guardar_modelo(modelo_random_forest, PATH_MODELO_ENTRENADO)
 
 
 def main():
+    """Función principal que orquesta el proceso de entrenamiento del modelo."""
     logger.info("Inicio del proceso de entrenamiento de modelo.")
     # Aquí se podría agregar más lógica si es necesario
     logger.info("Proceso de entrenamiento de modelo finalizado.")
