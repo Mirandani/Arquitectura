@@ -157,9 +157,14 @@ make tree              # Muestra estructura del proyecto
 make help              # Muestra todos los comandos disponibles
 ```
 
-# Resultados de pylint
+# Calidad de código
+## Resultados de pylint
 
 pylint_report.txt
 Your code has been rated at 10.00/10 (previous run: 9.95/10, +0.05)
 
 ![alt text](image-3.png)
+
+
+## Resultados de Ruff
+![alt text](image-4.png)
