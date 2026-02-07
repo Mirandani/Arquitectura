@@ -5,334 +5,257 @@ Este modulo sirve para hacer las transformaciones necesarias para dejar
 los datos listos para el analisis exploratorio y modelado.
 """
 
+import os
+import time
+import logging
+from datetime import datetime
 from itertools import product
 import pandas as pd
 import numpy as np
 
-# Funciones
+
+# Importación de módulos de utils
+
+from utils.outputs import guardar_dataset
+from utils.dtypes import optimizar_tipos
+from utils.data_validation import validar_datos
+
+
+pd.set_option('display.float_format', lambda x: f'{x:.2f}')
+
+# Configuración de logger
+def configurar_logger():
+    """Configura el logger para guardar en archivo y mostrar en consola"""
+    log_dir = 'artifacts/logs'
+    os.makedirs(log_dir, exist_ok=True)
+
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    log_filename = f'{log_dir}/prep_{timestamp}.log'
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler(log_filename),
+            logging.StreamHandler()
+        ]
+    )
+    return logging.getLogger(__name__)
+
+
+# FUNCIONES ESPECÍFICAS
 
 # función para generar la matriz base de mes-tienda-item
+
 def generar_grid_base(df_entrenamiento):
-    """Genera todas las combinaciones posibles de mes-tienda-item."""
+    """Genera las combinaciones de mes-tienda-item."""
     grid = []
-    cols = ['date_block_num', 'shop_id', 'item_id']
-    
+    grid_cols = ['date_block_num', 'shop_id', 'item_id']
+
     # Usamos el máximo mes en los datos + iteramos
     meses = df_entrenamiento['date_block_num'].unique()
-    
+
     for i in meses:
         ventas = df_entrenamiento[df_entrenamiento.date_block_num == i]
-        grid.append(np.array(list(product([i], ventas.shop_id.unique(), ventas.item_id.unique())), dtype='int16'))
-    
-    return pd.DataFrame(np.vstack(grid), columns=cols)
+        grid.append(np.array(list(product(
+            [i], ventas.shop_id.unique(), ventas.item_id.unique()
+        )), dtype='int16'))
 
-
-# función para cambiar tipos de datos
-def optimizar_tipos(df):
-    """Reduce el uso de memoria casteando IDs a enteros pequeños."""
-    return df.assign(
-        date_block_num=lambda x: x['date_block_num'].astype(np.int8),
-        shop_id=lambda x: x['shop_id'].astype(np.int8),
-        item_id=lambda x: x['item_id'].astype(np.int16)
-    )
-
-# función para guardado de datasets parquet
-def guardar_dataset(df, ruta):
-    """Guarda el dataframe en parquet e imprime confirmación."""
-    df.to_parquet(ruta, index=False)
-    print(f"Guardado: {ruta}  Dimensiones: {df.shape}")
+    return pd.DataFrame(np.vstack(grid), columns=grid_cols)
 
 # función para agregar historia de ventas
 def agregar_historia(datos, meses_atras, columna_base):
+    """Agrega variables de meses anteriores al dataframe."""
     df_temp = datos[['date_block_num', 'shop_id', 'item_id', columna_base]]
-    
+
     for mes in meses_atras:
         desplazado = df_temp.copy()
-        desplazado.columns = ['date_block_num', 'shop_id', 'item_id', f"{columna_base}_mes_ant_{mes}"]
+        desplazado.columns = [
+            'date_block_num', 'shop_id', 'item_id', f"{columna_base}_mes_ant_{mes}"
+        ]
         desplazado['date_block_num'] += mes
-        
-        datos = pd.merge(datos, desplazado, on=['date_block_num', 'shop_id', 'item_id'], how='left')
+
+        datos = pd.merge(
+            datos, desplazado, on=['date_block_num', 'shop_id', 'item_id'], how='left'
+        )
     return datos
 
-pd.set_option('display.float_format', lambda x: '%.2f' % x)
-
-###########################################################################
-# CARGA DE DATOS
-###########################################################################
-
-# Lectura de datos
-datos_entrenamiento = pd.read_csv('data/raw/sales_train.csv')
-articulos = pd.read_csv('data/raw/items_en.csv') # traducción de nombres de artículos a inglés
-categorias = pd.read_csv('data/raw/item_categories_en.csv') # traducción de categorías a inglés
-tiendas = pd.read_csv('data/raw/shops_en.csv')
-
-# Join de dataframes
-datos_entrenamiento = (
-    pd.read_csv('data/raw/sales_train.csv')
-    .merge(articulos, on='item_id', how='left')
-    .merge(categorias, on='item_category_id', how='left')
-    .merge(tiendas, on='shop_id', how='left')
-    .assign(
-        date=lambda df: pd.to_datetime(df['date'], format='%d.%m.%Y'),
-        month=lambda df: df['date'].dt.month
-    )
-)
-
-# Verificación del número de filas y columnas
-print("filas y columnas datos_entrenamiento",datos_entrenamiento.shape)
-print(datos_entrenamiento.head())
-print(datos_entrenamiento.describe())
-
-# Conteo nulos
-print("Valores nulos")
-nulos = datos_entrenamiento.isnull().sum()
-print(nulos[nulos > 0])
-
-
-# REVISIÓN INCIAL DE VENTAS MENSUALES
-
-# Agrupar ventas por mes
-ventas_mensuales = datos_entrenamiento.groupby('date_block_num')['item_cnt_day'].sum()
-
-# Gráficas
-"""
-plt.figure(figsize=(12, 5))
-plt.plot(ventas_mensuales.index, ventas_mensuales.values, marker='o', color='b')
-plt.title('Ventas ene 2013 - oct 2015')
-plt.xlabel('Mes 0 = ene 2013')
-plt.ylabel('Artículos vendidos')
-plt.axvline(x=11, color='r', linestyle='--', label='dic 2013')
-plt.axvline(x=23, color='r', linestyle='--', label='dic 2014')
-plt.legend()
-plt.show()
-"""
-
-
-# REVISIÓN OUTLIERS
-# Para número de artículos vendidos y comportamiento de precios
-#fig, ax = plt.subplots(1, 2, figsize=(14, 4))
-
-#sns.boxplot(x=datos_entrenamiento['item_cnt_day'], ax=ax[0])
-#ax[0].set_title('articulos vendidos por día')
-
-#sns.boxplot(x=datos_entrenamiento['item_price'], ax=ax[1])
-#ax[1].set_title('Precios')
-
-#plt.show()
-
-
-# Revisión de precios
-#datos_entrenamiento.sort_values("item_price", ascending=False).head(15)
-
-###########################################################################
-# LIMPIEZA DE DATOS
-###########################################################################
-print("Limpieza de datos...")
-
-datos_entrenamiento = (
-    datos_entrenamiento
-    .query('item_price > 0')           # Eliminar precios negativos
-    .query('item_price < 100000')      # Eliminar precios muy altos
-    .query('item_cnt_day < 1000')      # Eliminar ventas diarias excesivas
-    .drop_duplicates()
-)
-
-print("Filas y columnas después de limpieza", datos_entrenamiento.shape)
-
-
-##############################################################
-#  analisis exploratorio
-##############################################################
-
-# Revisión de tiendas abiertas
-ventas_por_tienda = (
-    datos_entrenamiento
-    .pivot_table(index='shop_id', columns='date_block_num', values='item_cnt_day', aggfunc='sum')
-    .fillna(0)
-)
-
-# Meses sin ventas  rellenar nas  con 0
-ventas_por_tienda = ventas_por_tienda.fillna(0)
-
-# Heat map
-#plt.figure(figsize=(20, 10))
-#sns.heatmap(ventas_por_tienda, cmap='viridis', vmin=0, vmax=2000) # vmin/vmax ajustan el contraste
-#plt.title('Ventas por tienda')
-#plt.xlabel('mes 0 = ene 2013')
-#plt.ylabel('ID Tienda')
-#plt.show()
-
-
-# Tiendas cerradas
-tiendas_cerradas = ventas_por_tienda.iloc[:, -2:][lambda df: df.sum(axis=1) == 0]
-print(f"{len(tiendas_cerradas)} tiendas sin ventas los últimos 2 meses")
-
-
-# Check 2 ventas por mes
-datos_entrenamiento['month'] = datos_entrenamiento['date'].dt.month
-
-# Suma de ventas por mes
-ventas_mensuales = datos_entrenamiento.groupby(['date_block_num', 'month'])['item_cnt_day'].sum().reset_index()
-
-#plt.figure(figsize=(12, 6))
-#sns.boxplot(x='month', y='item_cnt_day', data=ventas_mensuales)
-#plt.title('Distribución ventas por mes')
-#plt.xlabel('Mes (1=ene , 12= dic)')
-#plt.ylabel('Total de Ventas')
-#plt.show()
-
-
-# CATEGORÍAS TOP
-
-# Ventas por categoría
-cat_ventas = (
-    datos_entrenamiento
-    .groupby('item_category_name')['item_cnt_day']
-    .sum()
-    .sort_values(ascending=False)
-)
-
-# Top 20
-#plt.figure(figsize=(12, 8))
-#sns.barplot(y=cat_ventas.index[:20], x=cat_ventas.values[:20], palette='magma')
-#plt.title('Top 20 categorías más vendidas')
-#plt.xlabel('# unidades vendidas')
-#plt.show()
-
-
-############################
-# plot ventas por item_category_name vs mes
-
-# agrupar por mes, tienda, artículo
-datos_entrenamiento_agrupados = (
-    datos_entrenamiento
-    .groupby(['date_block_num', 'shop_id', 'item_id'])
-    .agg({
-        'item_cnt_day': 'sum',
-        'item_price': 'mean',
-        "item_category_id": 'first',
-        "item_category_name": 'first',
-        "shop_name": 'first'
-    })
-    .reset_index()
-)
-
-#plt.figure(figsize=(15, 7))
-#sns.lineplot(data=datos_entrenamiento_agrupados, x='date_block_num', y='item_cnt_day', hue='item_category_name', estimator='sum', ci=None)
-#plt.title('Ventas mensuales por categoría de artículo')
-#plt.xlabel('Mes (0 = ene 2013)')
-#plt.ylabel('Número de artículos vendidos')
-#plt.legend(title='Categoría de artículo', bbox_to_anchor=(1.05, 1), loc='upper left')
-#plt.show()
-
-#plot ventas por shop_name vs mes
-#plt.figure(figsize=(15, 7))
-#sns.lineplot(data=datos_entrenamiento_agrupados, x='date_block_num', y='item_cnt_day', hue='shop_name', estimator='sum', ci=None)
-#plt.title('Ventas mensuales por tienda')
-#plt.xlabel('Mes (0 = ene 2013)')
-#plt.ylabel('Número de artículos vendidos')
-#plt.legend(title='Tienda', bbox_to_anchor=(1.05, 1), loc='upper left')
-#plt.show()
-
-# Revisión de tiendas datos_entrenamiento vs datos_prueba
-datos_prueba = pd.read_csv('data/raw/test.csv')
-
-# Tiendas
-tiendas_entrenamiento = set(datos_entrenamiento['shop_id'].unique())
-tiendas_prueba = set(datos_prueba['shop_id'].unique())
-print("Tiendas nuevas en datos_prueba:", tiendas_prueba - tiendas_entrenamiento)
-
-# Productos
-art_entrenamiento = set(datos_entrenamiento['item_id'].unique())
-art_prueba = set(datos_prueba['item_id'].unique())
-print("Productos nuevos en datos_prueba:", len(art_prueba - art_entrenamiento))
 
 
 ###########################################################################
-# CONSOLIDACIÓN DE INFORMACIÓN MES-> TIENDA -> PRODUCTO -> VENTAS
+# EJECUCIÓN PRINCIPAL
 ###########################################################################
 
+if __name__ == "__main__":
+    # Configuración inicial de logger
+    logger = configurar_logger()
+    start_time = time.time()
+    logger.info("Iniciando proceso de preparación de datos...")
 
-# matriz_ventas matriz con mes-tienda-item
-matriz_ventas = generar_grid_base(datos_entrenamiento)
+    try:
+        # Lectura de datos
+        logger.info("Cargando datasets raw...")
+        # traducción de nombres de artículos a inglés
+        articulos = pd.read_csv('data/raw/items_en.csv')
+        # traducción de categorías a inglés
+        categorias = pd.read_csv('data/raw/item_categories_en.csv')
+        tiendas = pd.read_csv('data/raw/shops_en.csv')
 
-matriz_ventas = (
-    matriz_ventas
-    .pipe(optimizar_tipos)
-    .sort_values(['date_block_num', 'shop_id', 'item_id'])
-)
-
-# Incluimos las ventas por mes
-ventas_agrupadas = (
-    datos_entrenamiento
-    .groupby(['date_block_num', 'shop_id', 'item_id'])
-    .agg(item_cnt_month=('item_cnt_day', 'sum'))
-    .reset_index()
-)
-
-# Unimos ventas con matriz
-# Reemplazamos nulos por 0
-# Limitamos a 20 como pide la competencia
-
-cols = ['date_block_num', 'shop_id', 'item_id']
-
-matriz_ventas = (
-    pd.merge(matriz_ventas, ventas_agrupadas, on=cols, how='left')
-    .assign(
-        item_cnt_month=lambda df: df['item_cnt_month'].fillna(0).clip(0, 20).astype(np.float16)
-    )
-)
-
-print("Dimensiones matriz_ventas:", matriz_ventas.shape)
-#matriz_ventas.head()
-
-
-# Filas con 0 ventas
-total_filas = matriz_ventas.shape[0]
-cnt_ventas_cero = matriz_ventas.query('item_cnt_month == 0').shape[0]
-print(f"Porcentaje sin ventas: {(cnt_ventas_cero / total_filas) * 100:.2f}%")
-
-###########################################################################
-#.   MATRIZ MES TIENDA PRODUCTO + DATOS_PRUEBA + HISTORIA
-###########################################################################
-
-# Preparar datos_prueba para unión con matriz
-datos_prueba = (
-    pd.read_csv('data/raw/test.csv')
-    .assign(date_block_num=34)
-    .pipe(optimizar_tipos)
-)
-
-# Unión de datos_prueba con matriz consolidada
-matriz_ventas = pd.concat([matriz_ventas, datos_prueba], ignore_index=True, sort=False).fillna(0)
-
-#  GENERACIÓN DE DATASETS ABT
-# variables con número de mes
-matriz_ventas = (
-    matriz_ventas
-    .pipe(agregar_historia, meses_atras=[1, 2, 3, 12], columna_base='item_cnt_month')
-    .fillna(0)
-)
-
-##### GUARDANDO DATASETS
-
-# División de datos
-print("Generando datasets de entrenamiento, validación y prueba final...")
-guardar_dataset(
-    matriz_ventas[matriz_ventas.date_block_num < 33], 
-    'data/prep/datos_entreno.parquet'
-)
-
-guardar_dataset(
-    matriz_ventas[matriz_ventas.date_block_num == 33], 
-    'data/prep/datos_validacion.parquet'
-)
-
-guardar_dataset(
-    matriz_ventas[matriz_ventas.date_block_num == 34], 
-    'data/inference/datos_inferencia.parquet'
-)
-
-print("\nProceso finalizado con éxito.")
+        # Join de dataframes
+        datos_entrenamiento = (
+            pd.read_csv('data/raw/sales_train.csv')
+            .merge(articulos, on='item_id', how='left')
+            .merge(categorias, on='item_category_id', how='left')
+            .merge(tiendas, on='shop_id', how='left')
+            .assign(
+                date=lambda df: pd.to_datetime(df['date'], format='%d.%m.%Y'),
+                month=lambda df: df['date'].dt.month
+            )
+        )
+        logger.info(
+            "Datos cargados exitosamente: %s registros",
+            format(len(datos_entrenamiento), ",")
+        )
+        # Validación inicial de datos
+        validar_datos(datos_entrenamiento, "Datos Raw")
 
 
+
+        ###########################################################################
+        # LIMPIEZA DE DATOS
+        ###########################################################################
+
+        logger.info("Iniciando limpieza de datos...")
+        filas_antes = len(datos_entrenamiento)
+
+        datos_entrenamiento = (
+            datos_entrenamiento
+            .query('item_price > 0')           # Eliminar precios negativos
+            .query('item_price < 100000')      # Eliminar precios muy altos
+            .query('item_cnt_day < 1000')      # Eliminar ventas diarias excesivas
+            .drop_duplicates()
+        )
+
+        # Warning si se eliminaron filas
+        filas_despues = len(datos_entrenamiento)
+        filas_eliminadas = filas_antes - filas_despues
+
+        if filas_eliminadas > 0:
+            logger.warning(
+                "Se eliminaron %s registros durante la limpieza",
+                format(filas_eliminadas, ",")
+            )
+
+        logger.info("Dimensiones después de limpieza: %s", datos_entrenamiento.shape)
+
+
+        ###########################################################################
+        # CONSOLIDACIÓN DE INFORMACIÓN MES-> TIENDA -> PRODUCTO -> VENTAS
+        ###########################################################################
+
+        logger.info("Generando grid base, combinaciones mes-tienda-item...")
+
+        # matriz_ventas matriz con mes-tienda-item
+        matriz_ventas = generar_grid_base(datos_entrenamiento)
+
+        matriz_ventas = (
+            matriz_ventas
+            .pipe(optimizar_tipos)
+            .sort_values(['date_block_num', 'shop_id', 'item_id'])
+        )
+
+        # Incluimos las ventas por mes
+        ventas_agrupadas = (
+            datos_entrenamiento
+            .groupby(['date_block_num', 'shop_id', 'item_id'])
+            .agg(item_cnt_month=('item_cnt_day', 'sum'))
+            .reset_index()
+        )
+
+        # Unimos ventas con matriz
+        # Reemplazamos nulos por 0
+        # Limitamos a 20 como pide la competencia
+
+        cols = ['date_block_num', 'shop_id', 'item_id']
+
+        matriz_ventas = (
+            pd.merge(matriz_ventas, ventas_agrupadas, on=cols, how='left')
+            .assign(
+                item_cnt_month=lambda df: df['item_cnt_month']
+                .fillna(0).clip(0, 20).astype(np.float16)
+            )
+        )
+
+        logger.info(
+            "Matriz consolidada generada. Dimensiones: %s",
+            matriz_ventas.shape
+        )
+
+
+        ###########################################################################
+        #   MATRIZ MES TIENDA PRODUCTO + DATOS_PRUEBA + HISTORIA
+        ###########################################################################
+
+        # Preparar datos_prueba para unión con matriz
+
+        logger.info("Integrando datos de prueba...")
+
+        datos_prueba = (
+            pd.read_csv('data/raw/test.csv')
+            .assign(date_block_num=34)
+            .pipe(optimizar_tipos)
+        )
+
+        # Unión de datos_prueba con matriz consolidada
+        matriz_ventas = pd.concat(
+            [matriz_ventas, datos_prueba], ignore_index=True, sort=False
+        ).fillna(0)
+
+
+        # variables con número de mes
+
+        logger.info("Generando variables de meses de historia ...")
+
+        matriz_ventas = (
+            matriz_ventas
+            .pipe(agregar_historia, meses_atras=[1, 2, 3, 12], columna_base='item_cnt_month')
+            .fillna(0)
+        )
+
+        ##### GUARDANDO DATASETS
+
+        # División de datos
+        logger.info("Guardando datasets procesados...")
+
+        guardar_dataset(
+            matriz_ventas[matriz_ventas.date_block_num < 33],
+            'data/prep/datos_entreno.parquet'
+        )
+
+        guardar_dataset(
+            matriz_ventas[matriz_ventas.date_block_num == 33],
+            'data/prep/datos_validacion.parquet'
+        )
+
+        guardar_dataset(
+            matriz_ventas[matriz_ventas.date_block_num == 34],
+            'data/inference/datos_inferencia.parquet'
+        )
+
+
+        # Logger de tiempo de ejecución
+        duration = time.time() - start_time
+        logger.info(
+            "Proceso finalizado con éxito. Tiempo de ejecución: %.2f segundos",
+            duration
+        )
+
+
+    # Logger de errores críticos
+    except Exception as e:
+        logger.error(
+            "Fallo crítico en el script de preparación: %s",
+            str(e),
+            exc_info=True
+        )
+        raise
