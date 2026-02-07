@@ -51,9 +51,11 @@ Los datos provienen de la competencia de Kaggle **"Predict Future Sales"**. El d
 ├── uv.lock
 ├── artifacts                             # documentación y modelos
 │   ├── documentation
-│   │   ├── Executive_Summary.pdf
-│   │── logs                              # logs de ejecución de scripts
-│   │   ├── prep.log
+│   │   └── Executive_Summary.pdf
+│   ├── logs                              # logs de ejecución de scripts
+│   │   ├── prep_20260206_212148.log
+│   │   ├── train_20260206_212425.log
+│   │   └── inference_20260206_212500.log
 │   └── models
 │       └── modelo_random_forest.joblib
 ├── data                                  # datos del proyecto
@@ -184,3 +186,9 @@ Your code has been rated at 10.00/10 (previous run: 9.95/10, +0.05)
 ## Resultados de Black
 
 ![alt text](image-5.png)
+
+## Nota sobre logs
+
+Los logs de ejecución de los scripts se encuentran en la carpeta `artifacts/logs/` con nombres que incluyen la fecha y hora de ejecución para facilitar su identificación. Estos logs contienen información detallada sobre el proceso de preparación de datos, entrenamiento e inferencia, incluyendo métricas, errores y advertencias.
+
+![alt text](image-6.png)
