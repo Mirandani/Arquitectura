@@ -1,2 +1,15 @@
 [MASTER]
 init-hook='import sys; sys.path.append("./src")'
+
+[MESSAGES CONTROL]
+# Deshabilitar advertencia de código duplicado para configuraciones repetitivas
+disable=duplicate-code
+
+[SIMILARITIES]
+# Aumentar umbral de líneas similares (por defecto 4, ahora 25)
+# Esto ignora bloques pequeños de código repetido como configuración de logging
+min-similarity-lines=25
+
+[FORMAT]
+# Máximo de caracteres por línea
+max-line-length=100

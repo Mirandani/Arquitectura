@@ -45,6 +45,9 @@ Los datos provienen de la competencia de Kaggle **"Predict Future Sales"**. El d
 ├── uv.lock
 ├── artifacts                             # documentación y modelos
 │   ├── documentation
+│   │   ├── Executive_Summary.pdf
+│   │── logs                              # logs de ejecución de scripts
+│   │   ├── prep.log
 │   └── models
 │       └── modelo_random_forest.joblib
 ├── data                                  # datos del proyecto
