@@ -6,10 +6,6 @@ import numpy as np
 import joblib
 from sklearn.metrics import mean_squared_error
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-
 logger = logging.getLogger(__name__)
 
 

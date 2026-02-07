@@ -1,0 +1,10 @@
+2026-02-06 21:24:59,758 - inference - INFO - === Inicio del proceso de inferencia ===
+2026-02-06 21:24:59,759 - inference - INFO - Cargando datos de inferencia...
+2026-02-06 21:25:00,549 - inference - INFO - Datos cargados: 214,200 registros
+2026-02-06 21:25:00,559 - inference - INFO - Cargando modelo entrenado desde: artifacts/models/modelo_random_forest.joblib
+2026-02-06 21:25:01,244 - inference - INFO - Modelo cargado exitosamente
+2026-02-06 21:25:01,245 - inference - INFO - Realizando predicciones batch...
+2026-02-06 21:25:01,470 - inference - INFO - Predicciones completadas: 214200 valores
+2026-02-06 21:25:01,471 - inference - INFO - Guardando predicciones en: data/predictions/predicciones_batch.csv
+2026-02-06 21:25:02,093 - inference - INFO - Resumen predicciones - Media: 0.28 | Mediana: 0.14 | Min: 0.05 | Max: 19.43
+2026-02-06 21:25:02,093 - inference - INFO - === Proceso de inferencia finalizado exitosamente ===
