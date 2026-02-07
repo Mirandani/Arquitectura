@@ -93,7 +93,9 @@ estructura.txt
 # Temporary files
 *.tmp
 *.bak
-*.log
+
+# Excluir logs de artifacts/logs/ del ignore
+!artifacts/logs/*.log
 
 # macOS
 .DS_Store
