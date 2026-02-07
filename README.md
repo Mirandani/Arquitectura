@@ -115,12 +115,15 @@ uv run python src/prep.py
 
 ### 2. Entrenamiento del modelo
 Entrena modelos de machine learning (Regresión Lineal y Random Forest) y guarda el mejor modelo.
+
 ```bash
 uv run python src/train.py
 ```
 
 ### 3. Inferencia
+
 Carga el modelo entrenado, genera predicciones y guarda los resultados.
+
 ```bash
 uv run python src/inference.py
 ```
@@ -131,12 +134,14 @@ uv run python src/inference.py
 El proyecto incluye un Makefile con comandos útiles para desarrollo:
 
 ### Análisis de código
+
 ```bash
 make lint              # Ejecuta pylint y muestra resultados en terminal
 make lint-report       # Ejecuta pylint y guarda reporte en pylint_report.txt
 ```
 
 ### Formateo de código
+
 ```bash
 make format-black      # Formatea código con black
 make format-black-check # Verifica formato sin modificar archivos
@@ -146,8 +151,15 @@ make format-ruff-check  # Verifica formato con ruff
 ```
 
 ### Utilidades
+
 ```bash
 make tree              # Muestra estructura del proyecto
 make help              # Muestra todos los comandos disponibles
 ```
 
+# Resultados de pylint
+
+pylint_report.txt
+Your code has been rated at 10.00/10 (previous run: 9.95/10, +0.05)
+
+![alt text](image-2.png)
