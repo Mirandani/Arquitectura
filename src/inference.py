@@ -37,7 +37,11 @@ predicciones = modelo_entrenado.predict(datos_inferencia)
 # Agregar predicciones al DataFrame
 datos_inferencia["item_cnt_month_pred"] = predicciones
 
-guardar_predicciones(datos_inferencia, ["ID", "item_cnt_month_pred"], RUTA_PREDICCIONES)
+guardar_predicciones(
+    datos_inferencia,
+    ["ID", "item_cnt_month_pred"],
+    RUTA_PREDICCIONES,
+)
 
 # metricas de resumen
 resumen = resumen_predicciones(predicciones)

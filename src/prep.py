@@ -35,7 +35,13 @@ def generar_grid_base(df_entrenamiento):
         ventas = df_entrenamiento[df_entrenamiento.date_block_num == i]
         grid.append(
             np.array(
-                list(product([i], ventas.shop_id.unique(), ventas.item_id.unique())),
+                list(
+                    product(
+                        [i],
+                        ventas.shop_id.unique(),
+                        ventas.item_id.unique(),
+                    )
+                ),
                 dtype="int16",
             )
         )
@@ -59,7 +65,10 @@ def agregar_historia(datos, meses_atras, columna_base):
         desplazado["date_block_num"] += mes
 
         datos = pd.merge(
-            datos, desplazado, on=["date_block_num", "shop_id", "item_id"], how="left"
+            datos,
+            desplazado,
+            on=["date_block_num", "shop_id", "item_id"],
+            how="left"
         )
     return datos
 
@@ -101,15 +110,16 @@ if __name__ == "__main__":
         # Validación inicial de datos
         validar_datos(datos_entrenamiento, "Datos Raw")
 
-        ###########################################################################
+        # ##########################################################################
         # LIMPIEZA DE DATOS
-        ###########################################################################
+        # ##########################################################################
 
         logger.info("Iniciando limpieza de datos...")
         filas_antes = len(datos_entrenamiento)
 
         datos_entrenamiento = (
-            datos_entrenamiento.query("item_price > 0")  # Eliminar precios negativos
+            datos_entrenamiento
+            .query("item_price > 0")  # Eliminar precios negativos
             .query("item_price < 100000")  # Eliminar precios muy altos
             .query("item_cnt_day < 1000")  # Eliminar ventas diarias excesivas
             .drop_duplicates()
@@ -125,11 +135,14 @@ if __name__ == "__main__":
                 format(filas_eliminadas, ","),
             )
 
-        logger.info("Dimensiones después de limpieza: %s", datos_entrenamiento.shape)
+        logger.info(
+            "Dimensiones después de limpieza: %s",
+            datos_entrenamiento.shape,
+        )
 
-        ###########################################################################
+        # ##########################################################################
         # CONSOLIDACIÓN DE INFORMACIÓN MES-> TIENDA -> PRODUCTO -> VENTAS
-        ###########################################################################
+        # ##########################################################################
 
         logger.info("Generando grid base, combinaciones mes-tienda-item...")
 
@@ -142,7 +155,9 @@ if __name__ == "__main__":
 
         # Incluimos las ventas por mes
         ventas_agrupadas = (
-            datos_entrenamiento.groupby(["date_block_num", "shop_id", "item_id"])
+            datos_entrenamiento.groupby(
+                ["date_block_num", "shop_id", "item_id"]
+            )
             .agg(item_cnt_month=("item_cnt_day", "sum"))
             .reset_index()
         )
@@ -162,11 +177,14 @@ if __name__ == "__main__":
             .astype(np.float16)
         )
 
-        logger.info("Matriz consolidada generada. Dimensiones: %s", matriz_ventas.shape)
+        logger.info(
+            "Matriz consolidada generada. Dimensiones: %s",
+            matriz_ventas.shape,
+        )
 
-        ###########################################################################
+        # ##########################################################################
         #   MATRIZ MES TIENDA PRODUCTO + DATOS_PRUEBA + HISTORIA
-        ###########################################################################
+        # ##########################################################################
 
         # Preparar datos_prueba para unión con matriz
 
@@ -188,10 +206,12 @@ if __name__ == "__main__":
         logger.info("Generando variables de meses de historia ...")
 
         matriz_ventas = matriz_ventas.pipe(
-            agregar_historia, meses_atras=[1, 2, 3, 12], columna_base="item_cnt_month"
+            agregar_historia,
+            meses_atras=[1, 2, 3, 12],
+            columna_base="item_cnt_month"
         ).fillna(0)
 
-        ##### GUARDANDO DATASETS
+        # #### GUARDANDO DATASETS
 
         # División de datos
         logger.info("Guardando datasets procesados...")
@@ -214,12 +234,16 @@ if __name__ == "__main__":
         # Logger de tiempo de ejecución
         duration = time.time() - start_time
         logger.info(
-            "Proceso finalizado con éxito. Tiempo de ejecución: %.2f segundos", duration
+            "Proceso finalizado con éxito. "
+            "Tiempo de ejecución: %.2f segundos",
+            duration
         )
 
     # Logger de errores críticos
     except Exception as e:
         logger.error(
-            "Fallo crítico en el script de preparación: %s", str(e), exc_info=True
+            "Fallo crítico en el script de preparación: %s",
+            str(e),
+            exc_info=True,
         )
         raise

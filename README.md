@@ -5,28 +5,34 @@
 ## Métodos de Gran Escala
 
 ### Autores
+
 - **Blanca Azucena Orduña López**
 - **Daniel Miranda Badillo**
 
-**Repositorio:** https://github.com/Mirandani/Arquitectura
+**Repositorio:** <https://github.com/Mirandani/Arquitectura>
 
 ## Descripción del proyecto
+
 Este repositorio contiene el código, datos y documentación relacionados con el proyecto de Métodos de Gran Escala. El objetivo del proyecto es desarrollar un modelo de machine learning para predecir ventas en un contexto de retail, utilizando técnicas de preparación de datos, modelado y evaluación.
 
 ## Datos utilizados
+
 Los datos provienen de la competencia de Kaggle **"Predict Future Sales"**. El dataset incluye información sobre ventas históricas, productos, tiendas y fechas.
 
-- **Dataset:** https://www.kaggle.com/c/competitive-data-science-predict-future-sales
-- **Leaderboard:** https://www.kaggle.com/competitions/competitive-data-science-predict-future-sales/leaderboard
+- **Dataset:** <https://www.kaggle.com/c/competitive-data-science-predict-future-sales>
+- **Leaderboard:** <https://www.kaggle.com/competitions/competitive-data-science-predict-future-sales/leaderboard>
 
 ## Resultados
+
 **Score en Kaggle:** 1.02
 
 **Métricas de entrenamiento:**
+
 - RMSE Regresión Lineal: 0.9824
 - RMSE Random Forest: 0.9743
 
 **Estadísticas de predicciones:**
+
 - Media: 0.28
 - Mediana: 0.14
 - Mínimo: 0.05
@@ -89,18 +95,21 @@ Los datos provienen de la competencia de Kaggle **"Predict Future Sales"**. El d
 ```
 
 ## Requerimientos
+
 - Python 3.11 o superior
 - [uv](https://github.com/astral-sh/uv) para gestión de dependencias
 
 ## Instalación y configuración
 
 ### 1. Clonar el repositorio
+
 ```bash
 git clone https://github.com/Mirandani/Arquitectura.git
 cd Arquitectura
 ```
 
 ### 2. Instalar dependencias
+
 ```bash
 uv sync
 ```
@@ -108,12 +117,15 @@ uv sync
 ## Pipeline de ejecución
 
 ### 1. Preparación de datos
+
 Carga datos originales, realiza limpieza, ingeniería de características y guarda datos preparados en formato parquet.
+
 ```bash
 uv run python src/prep.py
 ```
 
 ### 2. Entrenamiento del modelo
+
 Entrena modelos de machine learning (Regresión Lineal y Random Forest) y guarda el mejor modelo.
 
 ```bash
@@ -127,7 +139,6 @@ Carga el modelo entrenado, genera predicciones y guarda los resultados.
 ```bash
 uv run python src/inference.py
 ```
-
 
 ## Comandos de desarrollo (Makefile)
 
@@ -165,7 +176,6 @@ pylint_report.txt
 Your code has been rated at 10.00/10 (previous run: 9.95/10, +0.05)
 
 ![alt text](image-3.png)
-
 
 ## Resultados de Ruff
 
