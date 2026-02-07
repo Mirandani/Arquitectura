@@ -1,13 +1,14 @@
 # src/file_checker.py
 """Script para verificar la existencia y tamaño de archivos clave en el
 proyecto."""
+
 import os
 
 # Lista de archivos a verificar según tus rutas
 rutas = [
-    'data/prep/datos_entreno.parquet',
-    'data/prep/datos_validacion.parquet',
-    'data/inference/datos_inferencia.parquet'
+    "data/prep/datos_entreno.parquet",
+    "data/prep/datos_validacion.parquet",
+    "data/inference/datos_inferencia.parquet",
 ]
 
 print("-" * 50)

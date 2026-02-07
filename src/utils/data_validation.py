@@ -1,12 +1,10 @@
-
 # src/utils/data_validation.py
-""" Módulo para validación de datos.
-"""
+"""Módulo para validación de datos."""
+
 import logging
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -25,7 +23,7 @@ def validar_datos(df, nombre="DataFrame"):
         logger.info("Dimensiones: %s", df.shape)
         nulos = df.isnull().sum()
         nulos = nulos[nulos > 0]
-        logger.info("Nulos:\n%s", nulos if not nulos.empty else 'Ninguno')
+        logger.info("Nulos:\n%s", nulos if not nulos.empty else "Ninguno")
         logger.info("\nHead (3):")
         logger.info("\n%s", df.head(3))
     except Exception as e:

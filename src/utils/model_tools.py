@@ -1,14 +1,13 @@
 # src/utils/model_tools.py
-"""Modulo para generar métricas de evaluación de modelos de machine learning.
-"""
+"""Modulo para generar métricas de evaluación de modelos de machine learning."""
+
 import logging
 import numpy as np
 import joblib
 from sklearn.metrics import mean_squared_error
 
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
 logger = logging.getLogger(__name__)
@@ -90,10 +89,10 @@ def resumen_predicciones(predicciones):
     try:
         logger.info("Generando resumen de predicciones...")
         resumen = {
-            'media': np.mean(predicciones),
-            'mediana': np.median(predicciones),
-            'min': np.min(predicciones),
-            'max': np.max(predicciones)
+            "media": np.mean(predicciones),
+            "mediana": np.median(predicciones),
+            "min": np.min(predicciones),
+            "max": np.max(predicciones),
         }
         logger.info("Resumen de predicciones: %s", resumen)
         return resumen
