@@ -8,17 +8,14 @@ La salida del script es un modelo entrenado:
     - artifacts/models/modelo_random_forest.joblib
 """
 
-import logging
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from utils.model_tools import evaluar_modelo_rmse, guardar_modelo
+from utils.logger import configurar_logger
 
 # Configuración de logging
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+logger = configurar_logger(__name__)
 
 # Constantes
 PATH_DATOS_ENTRENAMIENTO = "data/prep/datos_entreno.parquet"

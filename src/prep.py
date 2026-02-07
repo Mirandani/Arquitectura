@@ -5,39 +5,18 @@ Este modulo sirve para hacer las transformaciones necesarias para dejar
 los datos listos para el analisis exploratorio y modelado.
 """
 
-import os
 import time
-import logging
-from datetime import datetime
 from itertools import product
 import pandas as pd
 import numpy as np
 
 # Importación de módulos de utils
-
 from utils.outputs import guardar_dataset
 from utils.dtypes import optimizar_tipos
 from utils.data_validation import validar_datos
+from utils.logger import configurar_logger
 
 pd.set_option("display.float_format", lambda x: f"{x:.2f}")
-
-
-# Configuración de logger
-def configurar_logger():
-    """Configura el logger para guardar en archivo y mostrar en consola"""
-    log_dir = "artifacts/logs"
-    os.makedirs(log_dir, exist_ok=True)
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    log_filename = f"{log_dir}/prep_{timestamp}.log"
-
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-        handlers=[logging.FileHandler(log_filename), logging.StreamHandler()],
-    )
-    return logging.getLogger(__name__)
-
 
 # FUNCIONES ESPECÍFICAS
 
@@ -91,7 +70,7 @@ def agregar_historia(datos, meses_atras, columna_base):
 
 if __name__ == "__main__":
     # Configuración inicial de logger
-    logger = configurar_logger()
+    logger = configurar_logger(__name__)
     start_time = time.time()
     logger.info("Iniciando proceso de preparación de datos...")
 

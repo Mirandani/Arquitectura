@@ -8,18 +8,16 @@ La salida de este script son predicciones en batch que se guardan en:
     - data/predictions/predicciones_batch.csv
 """
 
-import logging
 import pandas as pd
 from utils.model_tools import (
     cargar_modelo,
     guardar_predicciones,
     resumen_predicciones,
 )
+from utils.logger import configurar_logger
 
-logging.basicConfig(
-    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-)
-logger = logging.getLogger(__name__)
+# Configuración de logging
+logger = configurar_logger(__name__)
 
 # Constantes
 RUTA_MODELO_ENTRENADO = "artifacts/models/modelo_random_forest.joblib"
