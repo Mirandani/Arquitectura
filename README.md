@@ -192,3 +192,18 @@ Your code has been rated at 10.00/10 (previous run: 9.95/10, +0.05)
 Los logs de ejecución de los scripts se encuentran en la carpeta `artifacts/logs/` con nombres que incluyen la fecha y hora de ejecución para facilitar su identificación. Estos logs contienen información detallada sobre el proceso de preparación de datos, entrenamiento e inferencia, incluyendo métricas, errores y advertencias.
 
 ![alt text](image-6.png)
+
+## Dependencias principales
+
+- pandas    # para manipulación de datos
+- numpy    # para operaciones numéricas
+- scikit-learn  # para modelado y evaluación
+- joblib    # para guardar y cargar modelos
+- logging   # para registro de eventos y errores
+- pylint    # para análisis de código
+- black   # para formateo de código
+- ruff  # para análisis y formateo de código
+- pyarrow   # para manejo de archivos parquet
+- uv    # para gestión de dependencias
+- boto3   # para demo de integración con AWS
+- matplotlib   # para visualización en notebooks 
