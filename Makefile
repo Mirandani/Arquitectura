@@ -1,7 +1,7 @@
 # Makefile para tareas comunes de desarrollo
 
 # Declaración de tareas como phony para evitar conflictos con archivos del mismo nombre
-.PHONY: lint lint-report format format-check help
+.PHONY: lint lint-report format format-check tree help
 
 help:
 	@echo "Comandos disponibles:"
@@ -9,6 +9,12 @@ help:
 	@echo "  make lint-report   - Ejecuta pylint y guarda reporte en pylint_report.txt"
 	@echo "  make format        - Formatea código con black"
 	@echo "  make format-check  - Verifica formato sin modificar archivos"
+	@echo "  make tree          - Muestra estructura del proyecto"
+
+tree:
+	@command -v tree >/dev/null 2>&1 && \
+		tree -I '__pycache__|*.pyc|.git|data|artifacts|.pytest_cache|.venv|venv' -L 3 || \
+		find . -not -path '*/\.*' -not -path '*/data/*' -not -path '*/__pycache__/*' -not -path '*/artifacts/*' | sort
 
 # Tarea para ejecutar pylint y mostrar resultados en terminal
 lint:

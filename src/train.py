@@ -12,7 +12,7 @@ import logging
 import pandas as pd
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
-from src.utils.model_tools import evaluar_modelo_rmse, guardar_modelo
+from utils.model_tools import evaluar_modelo_rmse, guardar_modelo
 
 # Configuración de logging
 logging.basicConfig(

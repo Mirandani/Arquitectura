@@ -9,7 +9,7 @@ La salida de este script son predicciones en batch que se guardan en:
 """
 import logging
 import pandas as pd
-from src.utils.model_tools import (
+from utils.model_tools import (
     cargar_modelo,
     guardar_predicciones,
     resumen_predicciones,
