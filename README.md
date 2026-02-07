@@ -5,31 +5,39 @@
 ## Métodos de Gran Escala
 
 ### Autores
-
 - **Blanca Azucena Orduña López**
 - **Daniel Miranda Badillo**
 
-Repositorio de proyectos del curso Métodos de Gran Escala 
-
-https://github.com/Mirandani/Arquitectura
+**Repositorio:** https://github.com/Mirandani/Arquitectura
 
 ## Descripción del proyecto
 Este repositorio contiene el código, datos y documentación relacionados con el proyecto de Métodos de Gran Escala. El objetivo del proyecto es desarrollar un modelo de machine learning para predecir ventas en un contexto de retail, utilizando técnicas de preparación de datos, modelado y evaluación.
 
 ## Datos utilizados
-https://www.kaggle.com/c/competitive-data-science-predict-future-sales
+Los datos provienen de la competencia de Kaggle **"Predict Future Sales"**. El dataset incluye información sobre ventas históricas, productos, tiendas y fechas.
 
-## Leaderboard Kaggle
-https://www.kaggle.com/competitions/competitive-data-science-predict-future-sales/leaderboard
+- **Dataset:** https://www.kaggle.com/c/competitive-data-science-predict-future-sales
+- **Leaderboard:** https://www.kaggle.com/competitions/competitive-data-science-predict-future-sales/leaderboard
 
+## Resultados
+**Score en Kaggle:** 1.02
 
-Los datos utilizados en este proyecto provienen de la competencia de Kaggle "Predict Future Sales". El dataset incluye información sobre ventas históricas, productos, tiendas y fechas, lo que permite entrenar modelos para predecir las ventas futuras.
+**Métricas de entrenamiento:**
+- RMSE Regresión Lineal: 0.9824
+- RMSE Random Forest: 0.9743
+
+**Estadísticas de predicciones:**
+- Media: 0.28
+- Mediana: 0.14
+- Mínimo: 0.05
+- Máximo: 19.43
 
 ### Estructura del repositorio
 
 
 ```
 .
+├── .gitignore                            # archivos ignorados por git
 ├── README.md
 ├── Makefile                              # comandos de desarrollo (lint, format, tree)
 ├── main.py
@@ -79,63 +87,40 @@ Los datos utilizados en este proyecto provienen de la competencia de Kaggle "Pre
 
 ## Requerimientos
 - Python 3.11 o superior
-- uv para gestión de dependencias
+- [uv](https://github.com/astral-sh/uv) para gestión de dependencias
 
-## Instrucciones para ejecutar el proyecto
+## Instalación y configuración
 
-### Clonar el repositorio:
+### 1. Clonar el repositorio
 ```bash
 git clone https://github.com/Mirandani/Arquitectura.git
 cd Arquitectura
 ```
 
-### Instalar dependencias utilizando uv:
+### 2. Instalar dependencias
 ```bash
 uv sync
 ```
 
-### Ejecutar el proceso de preparación de datos:
+## Pipeline de ejecución
+
+### 1. Preparación de datos
+Carga datos originales, realiza limpieza, ingeniería de características y guarda datos preparados en formato parquet.
 ```bash
 uv run python src/prep.py
 ```
 
-### Ejecutar el proceso de entrenamiento del modelo:
+### 2. Entrenamiento del modelo
+Entrena modelos de machine learning (Regresión Lineal y Random Forest) y guarda el mejor modelo.
 ```bash
 uv run python src/train.py
 ```
 
-### Ejecutar el proceso de inferencia para generar predicciones:
+### 3. Inferencia
+Carga el modelo entrenado, genera predicciones y guarda los resultados.
 ```bash
 uv run python src/inference.py
 ```
-
-## Pipeline de ejecución
-
-1. **Preparación de datos**: El script `src/prep.py` se encarga de cargar los datos originales, realizar limpieza, ingeniería de características y guardar los datos preparados en formato 
-```bash
-    uv run python src/prep.py
-```
-
-2. **Entrenamiento del modelo**: El script `src/train.py` carga los datos preparados, entrena un modelo de machine learning (Random Forest) y guarda el modelo entrenado en formato joblib.
-```bash
-    uv run python src/train.py
-```
-
-3. **Inferencia**: El script `src/inference.py` carga el modelo entrenado y los datos de inferencia, genera predicciones y guarda los resultados en formato parquet.
-```bash
-    uv run python src/inference.py
-```
-
-
-# Métricas de entrenamiento
-- RMSE Regresión Lineal: 0.9824
-- RMSE Random Forest: 0.9743
-
-# Resumen de predicciones
-- media: 0.28
-- mediana: 0.14
-- min: 0.05
-- max: 19.43
 
 
 ## Comandos de desarrollo (Makefile)
@@ -162,5 +147,4 @@ make format-ruff-check  # Verifica formato con ruff
 make tree              # Muestra estructura del proyecto
 make help              # Muestra todos los comandos disponibles
 ```
-
 
