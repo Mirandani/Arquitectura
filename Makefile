@@ -20,13 +20,33 @@ tree:
 docker-build-train:
 	docker build -f src/training/Dockerfile -t entrenamiento:latest .
 
+# Variables con valores por defecto; se pueden sobreescribir en la línea de comandos:
+#   make docker-run-train MODELO_BASE=random_forest MODELO_PRINCIPAL=linear
+#   make docker-run-train N_ESTIMATORS=200 MAX_DEPTH=6
+MODELO_BASE       ?= linear
+MODELO_PRINCIPAL  ?= random_forest
+N_ESTIMATORS      ?= 50
+MAX_DEPTH         ?= 10
+RANDOM_STATE      ?= 42
+ENTRADA           ?= data/prep/datos_entreno.parquet
+VALIDACION        ?= data/prep/datos_validacion.parquet
+SALIDA_TRAIN      ?= artifacts/models/modelo_random_forest.joblib
+
 docker-run-train:
 	# monta código, datos y artefactos para ejecutar entrenamiento
 	docker run --rm \
 		-v $(PWD)/src:/app/src \
 		-v $(PWD)/data:/app/data \
 		-v $(PWD)/artifacts:/app/artifacts \
-		entrenamiento:latest
+		entrenamiento:latest \
+		--entrada $(ENTRADA) \
+		--validacion $(VALIDACION) \
+		--salida $(SALIDA_TRAIN) \
+		--modelo-baseline $(MODELO_BASE) \
+		--modelo-principal $(MODELO_PRINCIPAL) \
+		--n-estimators $(N_ESTIMATORS) \
+		--max-depth $(MAX_DEPTH) \
+		--random-state $(RANDOM_STATE)
 
 # Tarea para ejecutar pylint y mostrar resultados en terminal
 lint:
