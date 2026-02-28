@@ -26,6 +26,6 @@ COPY ../../src/ ./src/
 # instalar las dependencias del proyecto, incluyendo el paquete del proyecto
 RUN uv sync --frozen
 
-# arrancar siempre con uv; el comando por defecto lanza el script de entrenamiento
-ENTRYPOINT ["uv", "run", "--"]
-CMD ["python", "src/inference/inference.py"]
+# arrancar siempre con uv; -m inference ejecuta src/inference/__main__.py (con argparse)
+# los argumentos de `docker run` se añaden al final del ENTRYPOINT
+ENTRYPOINT ["uv", "run", "--", "python", "-m", "inference"]

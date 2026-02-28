@@ -51,13 +51,22 @@ docker-run-train:
 docker-build-inference:
 	docker build -f src/inference/Dockerfile -t inferencia:latest .
 
+# Variables con valores por defecto; se pueden sobreescribir en la línea de comandos:
+#   make docker-run-inference DATOS=data/inference/otro.parquet
+MODELO ?= artifacts/models/modelo_random_forest.joblib
+DATOS  ?= data/inference/datos_inferencia.parquet
+SALIDA ?= data/predictions/predicciones_batch.csv
+
 docker-run-inference:
 	# monta código, datos y artefactos para ejecutar inferencia
 	docker run --rm \
 		-v $(PWD)/src:/app/src \
 		-v $(PWD)/data:/app/data \
 		-v $(PWD)/artifacts:/app/artifacts \
-		inferencia:latest
+		inferencia:latest \
+		--modelo $(MODELO) \
+		--datos $(DATOS) \
+		--salida $(SALIDA)
 
 .PHONY: run-test
 run-test:
