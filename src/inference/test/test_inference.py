@@ -1,14 +1,69 @@
 # src/inference/test/test_inference.py
 """Test para el módulo de inferencia."""
 import pytest
-from inference.__main__ import main as main_inferencia
+import numpy as np
+import pandas as pd
+from inference.inference import (
+    preparar_datos_inferencia, cargar_modelo_entrenado, generar_predicciones, 
+    guardar_predicciones, resumen_predicciones)
 
-def test_inferencia():
-    """Test básico para el proceso de inferencia."""
-    # Aquí se podrían agregar pruebas más específicas, como verificar que la salida del modelo es razonable
-    # o que el proceso de carga del modelo funciona correctamente.
-    try:
-        main_inferencia()
-        assert True  # Si no hay excepciones, el test pasa
-    except Exception as e:
-        pytest.fail(f"El proceso de inferencia falló con la siguiente excepción: {e}")
+class ModeloMock:
+    """Modelo dummy que predice siempre 1.0 — no necesita .joblib"""
+    def predict(self, X):
+        return np.ones(len(X))
+
+
+@pytest.fixture
+def df_con_target():
+    return pd.DataFrame({
+        "feature_1":      [10, 20, 30],
+        "feature_2":      [0.1, 0.2, 0.3],
+        "item_cnt_month": [5, 10, 15],      # columna target
+    })
+
+def test_preparar_datos_elimina_columna_target():
+    # Creo el DataFrame en memoria, sin tocar ningún archivo
+    df = pd.DataFrame({
+        "feature_1":      [10, 20],
+        "item_cnt_month": [5, 10],   # esta debe desaparecer
+    })
+    resultado = preparar_datos_inferencia(df)
+    assert "item_cnt_month" not in resultado.columns
+
+def test_preparar_datos_sin_columna_target():
+    df = pd.DataFrame({
+        "feature_1": [10, 20],
+        "feature_2": [0.1, 0.2],
+    })
+    resultado = preparar_datos_inferencia(df)
+    assert resultado.equals(df)  # no debe modificar el DataFrame
+
+def test_generar_predicciones_con_modelo_mock():
+    modelo = ModeloMock()
+    df = pd.DataFrame({
+        "feature_1": [10, 20],
+        "feature_2": [0.1, 0.2],
+    })
+    predicciones = generar_predicciones(modelo, df)
+    assert np.array_equal(predicciones, np.ones(len(df)))
+
+def test_resumen_predicciones():
+    predicciones = np.array([1, 2, 3, 4, 5])
+    resumen = resumen_predicciones(predicciones)
+    assert resumen["media"] == 3.0
+    assert resumen["mediana"] == 3.0
+    assert resumen["min"] == 1
+    assert resumen["max"] == 5
+
+def test_guardar_predicciones(tmp_path):
+    df = pd.DataFrame({
+        "ID": [1, 2],
+        "item_cnt_month_pred": [0.5, 1.5],
+    })
+    ruta_salida = tmp_path / "predicciones_test.csv"
+    guardar_predicciones(df, ["ID", "item_cnt_month_pred"], ruta_salida)
+    
+    # Verificar que el archivo se creó y tiene el contenido correcto
+    assert ruta_salida.exists()
+    df_leido = pd.read_csv(ruta_salida)
+    assert df_leido.equals(df[["ID", "item_cnt_month_pred"]])

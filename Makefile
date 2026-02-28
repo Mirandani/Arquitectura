@@ -59,6 +59,11 @@ docker-run-inference:
 		-v $(PWD)/artifacts:/app/artifacts \
 		inferencia:latest
 
+.PHONY: run-test
+run-test:
+	@echo "Ejecutando pruebas con pytest..."	
+	uv run pytest -v
+
 # Tarea para ejecutar pylint y mostrar resultados en terminal
 lint:
 	uv run pylint --output-format=text src/ || true
