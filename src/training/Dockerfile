@@ -28,6 +28,6 @@ COPY ../../src/ ./src/
 # instalar las dependencias del proyecto, incluyendo el paquete del proyecto
 RUN uv sync --frozen
 
-# arrancar siempre con uv; el comando por defecto lanza el script de entrenamiento
-ENTRYPOINT ["uv", "run", "--"]
-CMD ["python", "src/training/train.py"]
+# arrancar siempre con uv; -m training ejecuta src/training/__main__.py (con argparse)
+# los argumentos de `docker run` se añaden al final del ENTRYPOINT
+ENTRYPOINT ["uv", "run", "--", "python", "-m", "training"]
