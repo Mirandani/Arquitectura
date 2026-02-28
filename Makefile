@@ -16,6 +16,18 @@ tree:
 		tree -I '__pycache__|*.pyc|.git|data|artifacts|.pytest_cache|.venv|venv' -L 3 || \
 		find . -not -path '*/\.*' -not -path '*/data/*' -not -path '*/__pycache__/*' -not -path '*/artifacts/*' | sort
 
+# Contruir imagen de Docker para entrenamiento
+docker-build-train:
+	docker build -f src/training/Dockerfile -t entrenamiento:latest .
+
+docker-run-train:
+	# monta código, datos y artefactos para ejecutar entrenamiento
+	docker run --rm \
+		-v $(PWD)/src:/app/src \
+		-v $(PWD)/data:/app/data \
+		-v $(PWD)/artifacts:/app/artifacts \
+		entrenamiento:latest
+
 # Tarea para ejecutar pylint y mostrar resultados en terminal
 lint:
 	uv run pylint --output-format=text src/ || true
