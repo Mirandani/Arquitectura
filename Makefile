@@ -28,6 +28,17 @@ docker-run-train:
 		-v $(PWD)/artifacts:/app/artifacts \
 		entrenamiento:latest
 
+docker-build-inference:
+	docker build -f src/inference/Dockerfile -t inferencia:latest .
+
+docker-run-inference:
+	# monta código, datos y artefactos para ejecutar inferencia
+	docker run --rm \
+		-v $(PWD)/src:/app/src \
+		-v $(PWD)/data:/app/data \
+		-v $(PWD)/artifacts:/app/artifacts \
+		inferencia:latest
+
 # Tarea para ejecutar pylint y mostrar resultados en terminal
 lint:
 	uv run pylint --output-format=text src/ || true
