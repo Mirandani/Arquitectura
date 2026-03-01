@@ -1,6 +1,6 @@
 """_summary_
-La entrada del script son datos data/raw.
-La salida del script son datos data/prep.
+La entrada del script son datos en la ruta especificada por CLI.
+La salida del script son datos procesados en la ruta especificada por CLI.
 Este modulo sirve para hacer las transformaciones necesarias para dejar
 los datos listos para el analisis exploratorio y modelado.
 """
@@ -18,10 +18,21 @@ from utils.logger import configurar_logger
 
 pd.set_option("display.float_format", lambda x: f"{x:.2f}")
 
+# Constantes de rutas de archivos
+
+PATH_ITEMS = "data/raw/items_en.csv"
+PATH_CATEGORIES = "data/raw/item_categories_en.csv"
+PATH_SHOPS = "data/raw/shops_en.csv"
+PATH_TRAIN = "data/raw/sales_train.csv"
+PATH_TEST = "data/raw/test.csv"
+
+PATH_OUT_TRAIN = "data/prep/datos_entreno.parquet"
+PATH_OUT_VAL = "data/prep/datos_validacion.parquet"
+PATH_OUT_INFER = "data/inference/datos_inferencia.parquet"
+
 # FUNCIONES ESPECÍFICAS
 
 # función para generar la matriz base de mes-tienda-item
-
 
 def generar_grid_base(df_entrenamiento):
     """Genera las combinaciones de mes-tienda-item."""
@@ -77,7 +88,12 @@ def agregar_historia(datos, meses_atras, columna_base):
 # EJECUCIÓN PRINCIPAL
 ###########################################################################
 
-if __name__ == "__main__":
+def main(items_path: str, categories_path: str, shops_path: str, train_path: str,
+         test_path: str, out_train: str, out_val: str, out_infer: str):
+    """
+    Ejecuta el pipeline principal de preprocesamiento de datos.
+    """
+
     # Configuración inicial de logger
     logger = configurar_logger(__name__)
     start_time = time.time()
@@ -87,14 +103,14 @@ if __name__ == "__main__":
         # Lectura de datos
         logger.info("Cargando datasets raw...")
         # traducción de nombres de artículos a inglés
-        articulos = pd.read_csv("data/raw/items_en.csv")
+        articulos = pd.read_csv(items_path)
         # traducción de categorías a inglés
-        categorias = pd.read_csv("data/raw/item_categories_en.csv")
-        tiendas = pd.read_csv("data/raw/shops_en.csv")
+        categorias = pd.read_csv(categories_path)
+        tiendas = pd.read_csv(shops_path)
 
         # Join de dataframes
         datos_entrenamiento = (
-            pd.read_csv("data/raw/sales_train.csv")
+            pd.read_csv(train_path)
             .merge(articulos, on="item_id", how="left")
             .merge(categorias, on="item_category_id", how="left")
             .merge(tiendas, on="shop_id", how="left")
@@ -191,7 +207,7 @@ if __name__ == "__main__":
         logger.info("Integrando datos de prueba...")
 
         datos_prueba = (
-            pd.read_csv("data/raw/test.csv")
+            pd.read_csv(test_path)
             .assign(date_block_num=34)
             .pipe(optimizar_tipos)
         )
@@ -216,20 +232,9 @@ if __name__ == "__main__":
         # División de datos
         logger.info("Guardando datasets procesados...")
 
-        guardar_dataset(
-            matriz_ventas[matriz_ventas.date_block_num < 33],
-            "data/prep/datos_entreno.parquet",
-        )
-
-        guardar_dataset(
-            matriz_ventas[matriz_ventas.date_block_num == 33],
-            "data/prep/datos_validacion.parquet",
-        )
-
-        guardar_dataset(
-            matriz_ventas[matriz_ventas.date_block_num == 34],
-            "data/inference/datos_inferencia.parquet",
-        )
+        guardar_dataset(matriz_ventas[matriz_ventas.date_block_num < 33], out_train)
+        guardar_dataset(matriz_ventas[matriz_ventas.date_block_num == 33], out_val)
+        guardar_dataset(matriz_ventas[matriz_ventas.date_block_num == 34], out_infer)
 
         # Logger de tiempo de ejecución
         duration = time.time() - start_time
@@ -247,3 +252,43 @@ if __name__ == "__main__":
             exc_info=True,
         )
         raise
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser(description="Preparación de datos de ventas para modelo")
+
+    # Entradas
+    parser.add_argument("--items", type=str, default=PATH_ITEMS,
+                        help="Ruta al archivo items_en.csv")
+    parser.add_argument("--categories", type=str, default=PATH_CATEGORIES,
+                        help="Ruta al archivo categorias")
+    parser.add_argument("--shops", type=str, default=PATH_SHOPS,
+                        help="Ruta al archivo tiendas")
+    parser.add_argument("--train", type=str, default=PATH_TRAIN,
+                        help="Ruta al archivo de entrenamiento")
+    parser.add_argument("--test", type=str, default=PATH_TEST,
+                        help="Ruta al archivo test")
+
+    # Salidas
+    parser.add_argument("--out-train", type=str, default=PATH_OUT_TRAIN,
+                        help="Ruta para datos de entrenamiento")
+    parser.add_argument("--out-val", type=str, default=PATH_OUT_VAL,
+                        help="Ruta para datos de validacion")
+    parser.add_argument("--out-infer", type=str, default=PATH_OUT_INFER,
+                        help="Ruta para datos de inferencia")
+
+    args = parser.parse_args()
+
+
+    main(
+        items_path=args.items,
+        categories_path=args.categories,
+        shops_path=args.shops,
+        train_path=args.train,
+        test_path=args.test,
+        out_train=args.out_train,
+        out_val=args.out_val,
+        out_infer=args.out_infer
+    )
