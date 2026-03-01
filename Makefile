@@ -127,3 +127,32 @@ format-ruff:
 format-ruff-check:
 	uv run ruff check --output-format=full src/ || true
 
+# Contruir imagen de Docker para preprocesamiento
+docker-build-prep:
+	docker build -f src/preprocessing/Dockerfile -t preprocesamiento:latest .
+
+# Variables con valores por defecto para preprocesamiento:
+ITEMS_PATH      ?= data/raw/items_en.csv
+CATEGORIES_PATH ?= data/raw/item_categories_en.csv
+SHOPS_PATH      ?= data/raw/shops_en.csv
+TRAIN_PATH      ?= data/raw/sales_train.csv
+TEST_PATH       ?= data/raw/test.csv
+OUT_TRAIN       ?= data/prep/datos_entreno.parquet
+OUT_VAL         ?= data/prep/datos_validacion.parquet
+OUT_INFER       ?= data/inference/datos_inferencia.parquet
+
+
+docker-run-prep:
+	# monta código y datos para ejecutar preprocesamiento
+	docker run --rm \
+		-v $(PWD)/src:/app/src \
+		-v $(PWD)/data:/app/data \
+		preprocesamiento:latest \
+		--items $(ITEMS_PATH) \
+		--categories $(CATEGORIES_PATH) \
+		--shops $(SHOPS_PATH) \
+		--train $(TRAIN_PATH) \
+		--test $(TEST_PATH) \
+		--out-train $(OUT_TRAIN) \
+		--out-val $(OUT_VAL) \
+		--out-infer $(OUT_INFER)
