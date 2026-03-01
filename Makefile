@@ -141,6 +141,7 @@ OUT_TRAIN       ?= data/prep/datos_entreno.parquet
 OUT_VAL         ?= data/prep/datos_validacion.parquet
 OUT_INFER       ?= data/inference/datos_inferencia.parquet
 
+
 docker-run-prep:
 	# monta código y datos para ejecutar preprocesamiento
 	docker run --rm \
