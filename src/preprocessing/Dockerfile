@@ -3,6 +3,8 @@ FROM python:3.13.12
 
 WORKDIR /app
 
+ENV PYTHONPATH=/app
+
 COPY . /app
 
 # Instalar dependencias 
@@ -25,4 +27,3 @@ ENTRYPOINT ["python", "prep.py"]
 
 # Comando por defecto
 CMD []
-
