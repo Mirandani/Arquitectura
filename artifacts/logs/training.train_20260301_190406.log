@@ -1,0 +1,24 @@
+2026-03-01 19:04:06,704 - training.train - INFO - === Inicio del proceso de entrenamiento de modelo ===
+2026-03-01 19:04:06,924 - training.train - INFO - Datos cargados — Entrenamiento: 10,675,632 registros, Validación: 238,172 registros
+2026-03-01 19:04:06,930 - training.train - INFO - Features preparados — Entrenamiento: 8 cols, Validación: 8 cols
+2026-03-01 19:04:06,930 - training.train - INFO - Features preparados — Entrenamiento: 8 cols, Validación: 8 cols
+2026-03-01 19:04:06,930 - training.train - INFO - Features: 8 columnas
+2026-03-01 19:04:06,930 - training.train - INFO - Features: 8 columnas
+2026-03-01 19:04:06,930 - training.train - INFO - Entrenando modelo baseline — linear...
+2026-03-01 19:04:06,930 - training.train - INFO - Entrenando modelo baseline — linear...
+2026-03-01 19:04:08,428 - training.train - INFO - ✓ RMSE linear (baseline): 0.9824
+2026-03-01 19:04:08,428 - training.train - INFO - ✓ RMSE linear (baseline): 0.9824
+2026-03-01 19:04:08,428 - training.train - INFO - Entrenando modelo comparativo — random_forest...
+2026-03-01 19:04:08,428 - training.train - INFO - Entrenando modelo comparativo — random_forest...
+2026-03-01 19:05:29,648 - training.train - INFO - ✓ RMSE random_forest (comparativo): 0.9766
+2026-03-01 19:05:29,648 - training.train - INFO - ✓ RMSE random_forest (comparativo): 0.9766
+2026-03-01 19:05:29,648 - training.train - INFO - Entrenando modelo principal — xgboost...
+2026-03-01 19:05:29,648 - training.train - INFO - Entrenando modelo principal — xgboost...
+2026-03-01 19:05:45,468 - training.train - INFO - ✓ RMSE xgboost (principal): 0.9642
+2026-03-01 19:05:45,468 - training.train - INFO - ✓ RMSE xgboost (principal): 0.9642
+2026-03-01 19:05:45,468 - training.train - INFO - Mejora respecto al baseline: 1.85% ↓
+2026-03-01 19:05:45,468 - training.train - INFO - Mejora respecto al baseline: 1.85% ↓
+2026-03-01 19:05:45,470 - training.train - INFO - Modelo principal guardado en: artifacts/models/modelo_xgboost.joblib
+2026-03-01 19:05:45,470 - training.train - INFO - Modelo principal guardado en: artifacts/models/modelo_xgboost.joblib
+2026-03-01 19:05:45,471 - training.train - INFO - === Proceso de entrenamiento finalizado exitosamente ===
+2026-03-01 19:05:45,471 - training.train - INFO - === Proceso de entrenamiento finalizado exitosamente ===
