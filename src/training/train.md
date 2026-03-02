@@ -1,0 +1,21 @@
+![alt text](image.png)
+
+make docker-run-train  
+# monta código, datos y artefactos para ejecutar entrenamiento
+docker run --rm \
+                -v /Users/danielmiranda/ITAM/Metodos_Gran_Escala/Arquitectura/src:/app/src \
+                -v /Users/danielmiranda/ITAM/Metodos_Gran_Escala/Arquitectura/data:/app/data \
+                -v /Users/danielmiranda/ITAM/Metodos_Gran_Escala/Arquitectura/artifacts:/app/artifacts \
+                entrenamiento:latest
+2026-02-28 00:33:23,921 - train - INFO - === Inicio del proceso de entrenamiento de modelo ===
+2026-02-28 00:33:23,922 - train - INFO - Cargando datasets de entrenamiento y validación...
+2026-02-28 00:33:24,649 - train - INFO - Datos cargados - Entrenamiento: 10,675,632 registros, Validación: 238,172 registros
+2026-02-28 00:33:24,649 - train - INFO - Preparando features y target...
+2026-02-28 00:33:24,652 - train - INFO - Features: 8 columnas
+2026-02-28 00:33:24,652 - train - INFO - Iniciando entrenamiento del modelo de Regresión Lineal...
+2026-02-28 00:33:30,826 - train - INFO - ✓ RMSE Regresión Lineal: 0.9824
+2026-02-28 00:33:30,830 - train - INFO - Iniciando entrenamiento del modelo Random Forest...
+2026-02-28 00:36:11,387 - train - INFO - ✓ RMSE Random Forest: 0.9743
+2026-02-28 00:36:11,389 - train - INFO - Guardando modelo entrenado...
+2026-02-28 00:36:11,444 - train - INFO - Modelo guardado en: artifacts/models/modelo_random_forest.joblib
+2026-02-28 00:36:11,446 - train - INFO - === Proceso de entrenamiento finalizado exitosamente ===
