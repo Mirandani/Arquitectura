@@ -1,107 +1,132 @@
 ![alt text](image.png)
 
-# ITAM Maestría en Ciencia de Datos
+# ITAM Maestría en Ciencia de Datos — Métodos de Gran Escala
 
-## Métodos de Gran Escala
-
-### Autores
+## Autores
 
 - **Blanca Azucena Orduña López**
 - **Daniel Miranda Badillo**
 
 **Repositorio:** <https://github.com/Mirandani/Arquitectura>
 
-## Descripción del proyecto
+---
 
-Este repositorio contiene el código, datos y documentación relacionados con el proyecto de Métodos de Gran Escala. El objetivo del proyecto es desarrollar un modelo de machine learning para predecir ventas en un contexto de retail, utilizando técnicas de preparación de datos, modelado y evaluación.
+## Descripción del Proyecto
 
-## Datos utilizados
+Este repositorio implementa un **pipeline completo de Machine Learning** para predecir ventas en retail usando técnicas de preparación de datos, entrenamiento de modelos y inferencia en batch.
 
-Los datos provienen de la competencia de Kaggle **"Predict Future Sales"**. El dataset incluye información sobre ventas históricas, productos, tiendas y fechas.
+### Caso de uso
+Predecir ventas futuras de productos en diferentes tiendas basándose en datos históricos.
 
-- **Dataset:** <https://www.kaggle.com/c/competitive-data-science-predict-future-sales>
-- **Leaderboard:** <https://www.kaggle.com/competitions/competitive-data-science-predict-future-sales/leaderboard>
+### Objetivo
+Desarrollar un modelo escalable, testeable y containerizado que permita:
+- **Preparación de datos** con validación automática
+- **Entrenamiento flexible** con múltiples modelos y hiperparámetros configurables
+- **Inferencia en batch** sobre nuevos datos
+- **Calidad de código** mediante linting, formateo y pruebas unitarias
 
-## Resultados
+### Datos
+- **Fuente:** Kaggle — [Predict Future Sales](https://www.kaggle.com/c/competitive-data-science-predict-future-sales)
+- **Métricas de desempeño:**
+  - RMSE Regresión Lineal (baseline): 0.9824
+  - RMSE Random Forest (principal): 0.9743
+  - **Mejora:** ~0.83% respecto al baseline
 
-**Score en Kaggle:** 1.02
+---
 
-**Métricas de entrenamiento:**
-
-- RMSE Regresión Lineal: 0.9824
-- RMSE Random Forest: 0.9743
-
-**Estadísticas de predicciones:**
-
-- Media: 0.28
-- Mediana: 0.14
-- Mínimo: 0.05
-- Máximo: 19.43
-
-### Estructura del repositorio
-
+## Estructura del Repositorio
 
 ```
 .
-├── .gitignore                            # archivos ignorados por git
-├── README.md
-├── Makefile                              # comandos de desarrollo (lint, format, tree)
-├── main.py
-├── pyproject.toml
-├── uv.lock
-├── artifacts                             # documentación y modelos
-│   ├── documentation
-│   │   └── Executive_Summary.pdf
-│   ├── logs                              # logs de ejecución de scripts
-│   │   ├── prep_20260206_212148.log
-│   │   ├── train_20260206_212425.log
-│   │   └── inference_20260206_212500.log
-│   └── models
-│       └── modelo_random_forest.joblib
-├── data                                  # datos del proyecto
-│   ├── inference                         # datos para predicciones en batch
-│   ├── predictions                       # resultados de predicciones
-│   ├── prep                              # datos preparados para modelado
-│   └── raw                               # datos originales sin procesar
-├── demo-boto3                            # demo de integración con AWS
-│   ├── README.md
-│   ├── main.py
-│   ├── pyproject.toml
-│   └── uv.lock
-├── notebooks                             # notebooks de exploración y modelado
-│   ├── modelo_retail.ipynb
-│   └── notebook.ipynb
-├── notes                                 # documentación y notas
-│   ├── buenas_practicas.md
-│   └── notas.md
-├── src                                   # código fuente del proyecto
-│   ├── __init__.py
-│   ├── file_checker.py                   # verificación de archivos
-│   ├── inference.py                      # predicciones con modelo entrenado
-│   ├── prep.py                           # preparación de datos
-│   ├── train.py                          # entrenamiento de modelos
-│   └── utils                             # utilidades compartidas
+├── README.md                            # Este archivo
+├── Makefile                             # Tareas de desarrollo y Docker
+├── pyproject.toml                       # Configuración del proyecto (uv + pytest)
+├── uv.lock                              # Dependencias fijadas
+│
+├── data/                                # Datos del pipeline
+│   ├── raw/                             # Datos originales (sin procesar)
+│   ├── prep/                            # Datos preparados (parquet)
+│   ├── inference/                       # Datos para predicciones en batch
+│   └── predictions/                     # Resultados de inferencia
+│
+├── artifacts/                           # Modelos entrenados y documentación
+│   ├── models/
+│   │   └── modelo_random_forest.joblib
+│   ├── logs/                            # Logs de ejecución
+│   └── documentation/
+│       └── Executive_Summary.pdf
+│
+├── src/                                 # Código fuente modular
+│   ├── utils/                           # Utilidades compartidas
+│   │   ├── __init__.py
+│   │   ├── logger.py                    # Configuración de logging
+│   │   ├── model_tools.py               # Evaluación y serialización de modelos
+│   │   ├── data_validation.py           # Validación de datos
+│   │   ├── dtypes.py                    # Gestión de tipos de datos
+│   │   └── outputs.py                   # Exportación de resultados
+│   │
+│   ├── prep/                            # Módulo de preparación de datos
+│   │   ├── __init__.py
+│   │   ├── prep.py                      # Funciones puras de transformación
+│   │   └── test/
+│   │       ├── __init__.py
+│   │       └── test_prep.py             # Tests unitarios
+│   │
+│   ├── training/                        # Módulo de entrenamiento
+│   │   ├── __init__.py
+│   │   ├── Dockerfile                   # Imagen Docker para entrenamiento
+│   │   ├── __main__.py                  # CLI con argparse
+│   │   ├── train.py                     # Funciones puras de modelado
+│   │   └── test/
+│   │       ├── __init__.py
+│   │       └── test_train.py            # Tests unitarios
+│   │
+│   └── inference/                       # Módulo de predicciones
 │       ├── __init__.py
-│       ├── data_validation.py            # validación de datos
-│       ├── dtypes.py                     # manejo de tipos de datos
-│       ├── logger.py                     # configuración de logging
-│       ├── model_tools.py                # herramientas de modelado
-│       └── outputs.py                    # funciones de salida de datos
-└── tarea_01                              # trabajos y experimentos
-    ├── data
-    ├── experimentos
-    │   ├── EDA_retail.ipynb
-    │   └── EDA2_retail.ipynb
-    ├── pyproject.toml
-    └── uv.lock
+│       ├── Dockerfile                   # Imagen Docker para inferencia
+│       ├── __main__.py                  # CLI con argparse
+│       ├── inference.py                 # Funciones puras de predicción
+│       └── test/
+│           ├── __init__.py
+│           └── test_inference.py        # Tests unitarios
+│
+├── notebooks/                           # Exploración y análisis
+│   └── modelo_retail.ipynb
+│
+└── notes/                               # Documentación interna
+    ├── buenas_practicas.md
+    └── notas.md
 ```
 
-## Requerimientos
+---
 
-- Python 3.11 o superior
-- [uv](https://github.com/astral-sh/uv) para gestión de dependencias
+## Git Workflow
 
-## Instalación y configuración
+### Rama principal: `main`
+- Código estable y testeado
+- Se actualiza solo mediante Pull Requests
+
+### Ramas de desarrollo
+```bash
+git checkout -b feature/nombre-feature    # Rama para nuevas funcionalidades
+git checkout -b fix/nombre-bug            # Rama para correcciones
+```
+
+### Proceso de integración
+1. Crear rama desde `main`
+2. Realizar cambios y commits
+3. Crear Pull Request con descripción clara
+4. Pasar tests y revisión de código
+5. Merge a `main`
+
+---
+
+## Instalación y Setup
+
+### Requisitos previos
+- **Python:** 3.12+
+- **Docker:** (opcional, para ejecución containerizada)
+- **Git:** para clonar el repositorio
 
 ### 1. Clonar el repositorio
 
@@ -110,100 +135,327 @@ git clone https://github.com/Mirandani/Arquitectura.git
 cd Arquitectura
 ```
 
-### 2. Instalar dependencias
+### 2. Crear e instalar el ambiente virtual
 
 ```bash
+# Instalar dependencias con uv
 uv sync
+
+# Activar el ambiente (opcional, uv run lo hace automáticamente)
+source .venv/bin/activate  # en macOS/Linux
 ```
 
-## Pipeline de ejecución
-
-### 1. Preparación de datos
-
-Carga datos originales, realiza limpieza, ingeniería de características y guarda datos preparados en formato parquet.
+### 3. Verificar instalación
 
 ```bash
-uv run python src/prep.py
+uv run python -c "import pandas; print('✓ Dependencias instaladas')"
 ```
 
-### 2. Entrenamiento del modelo
+---
 
-Entrena modelos de machine learning (Regresión Lineal y Random Forest) y guarda el mejor modelo.
+## Ejecución del Pipeline Completo
+
+### Opción A: Sin Docker (local)
 
 ```bash
-uv run python src/train.py
+# 1. Preparación de datos
+uv run python -m prep
+
+# 2. Entrenamiento con defaults
+uv run python -m training
+
+# 3. Inferencia con defaults
+uv run python -m inference
 ```
 
-### 3. Inferencia
+### Opción B: Con Docker (contenedores aislados)
 
-Carga el modelo entrenado, genera predicciones y guarda los resultados.
+#### Paso 1: Preparación de datos
 
 ```bash
-uv run python src/inference.py
+make docker-build-prep
+make docker-run-prep
 ```
 
-## Comandos de desarrollo (Makefile)
-
-El proyecto incluye un Makefile con comandos útiles para desarrollo:
-
-### Análisis de código
+#### Paso 2: Entrenamiento con defaults
 
 ```bash
-make lint              # Ejecuta pylint y muestra resultados en terminal
-make lint-report       # Ejecuta pylint y guarda reporte en pylint_report.txt
+make docker-build-train
+make docker-run-train
+```
+
+#### Paso 3: Inferencia con defaults
+
+```bash
+make docker-build-inference
+make docker-run-inference
+```
+
+---
+
+## Ejecución de Contenedores con Argumentos
+
+### Training — Modelos y Hiperparámetros Configurables
+
+**Estructura base:**
+```bash
+make docker-run-train \
+  MODELO_BASE=linear \
+  MODELO_PRINCIPAL=random_forest \
+  N_ESTIMATORS=200 \
+  MAX_DEPTH=6 \
+  RANDOM_STATE=42
+```
+
+**Ejemplos:**
+
+```bash
+# Random Forest con hiperparámetros personalizados
+make docker-run-train \
+  MODELO_PRINCIPAL=random_forest \
+  N_ESTIMATORS=200 \
+  MAX_DEPTH=8
+
+# Random Forest vs Random Forest (comparar configuraciones)
+make docker-run-train \
+  MODELO_BASE=random_forest \
+  MODELO_PRINCIPAL=random_forest \
+  RANDOM_STATE=123
+
+# Lineal vs Lineal (baseline puro)
+make docker-run-train \
+  MODELO_BASE=linear \
+  MODELO_PRINCIPAL=linear
+```
+
+### Inference — Datos y Rutas Personalizadas
+
+**Estructura base:**
+```bash
+make docker-run-inference \
+  DATOS=data/inference/datos_inferencia.parquet \
+  MODELO=artifacts/models/modelo_random_forest.joblib \
+  SALIDA=data/predictions/predicciones_batch.csv
+```
+
+**Ejemplos:**
+
+```bash
+# Inferencia con datos alternativos
+make docker-run-inference \
+  DATOS=data/inference/datos_nuevos.parquet
+
+# Cambiar ruta de salida
+make docker-run-inference \
+  SALIDA=data/predictions/predicciones_v2.csv
+```
+
+### Variables de configuración en el Makefile
+
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `MODELO_BASE` | `linear` | Modelo baseline para comparación |
+| `MODELO_PRINCIPAL` | `random_forest` | Modelo principal (se guarda) |
+| `N_ESTIMATORS` | 50 | Número de árboles (RandomForest) |
+| `MAX_DEPTH` | 10 | Profundidad máxima (RandomForest) |
+| `RANDOM_STATE` | 42 | Semilla de reproducibilidad |
+| `ENTRADA` | `data/prep/datos_entreno.parquet` | Ruta datos entrenamiento |
+| `VALIDACION` | `data/prep/datos_validacion.parquet` | Ruta datos validación |
+| `SALIDA_TRAIN` | `artifacts/models/modelo_random_forest.joblib` | Ruta modelo guardado |
+| `DATOS` | `data/inference/datos_inferencia.parquet` | Ruta datos inferencia |
+| `SALIDA` | `data/predictions/predicciones_batch.csv` | Ruta predicciones |
+
+---
+
+## Pruebas Unitarias
+
+### Ejecutar todas las pruebas
+
+```bash
+# Todos los tests
+uv run pytest -v
+
+# Solo training
+uv run pytest -v src/training/test
+
+# Solo inference
+uv run pytest -v src/inference/test
+
+# Con cobertura
+uv run pytest --cov=src src/
+```
+
+### Estructura de tests
+
+Cada módulo tiene tests unitarios que prueban **funciones puras** con datos sintéticos:
+
+#### `src/training/test/test_train.py` — 8 tests
+- `test_preparar_datos_elimina_target_de_features` ✓
+- `test_preparar_datos_conserva_features` ✓
+- `test_preparar_datos_target_correcto` ✓
+- `test_preparar_datos_lanza_error_sin_target` ✓
+- `test_construir_modelo_random_forest_retorna_tipo_correcto` ✓
+- `test_construir_modelo_linear_retorna_tipo_correcto` ✓
+- `test_construir_modelo_random_forest_respeta_hiperparametros` ✓
+- `test_construir_modelo_tipo_invalido_lanza_error` ✓
+
+#### `src/inference/test/test_inference.py` — 5 tests
+- `test_preparar_datos_elimina_columna_target` ✓
+- `test_preparar_datos_sin_columna_target` ✓
+- `test_generar_predicciones_con_modelo_mock` ✓
+- `test_resumen_predicciones` ✓
+- `test_guardar_predicciones` ✓
+
+### Filosofía de testing
+
+- ✅ **Funciones puras**: se testean con datos en memoria (sin archivos)
+- ✅ **Mock objects**: modelos dummy para aislar la lógica
+- ✅ **Sin I/O**: tests rápidos (<2 segundos)
+- ✅ **Cobertura**: funciones críticas de transformación y modelado
+
+---
+
+## Comandos de Desarrollo (Makefile)
+
+### Linting
+
+```bash
+make lint              # Pylint en terminal
+make lint-report       # Pylint con reporte en archivo
 ```
 
 ### Formateo de código
 
 ```bash
-make format-black      # Formatea código con black
-make format-black-check # Verifica formato sin modificar archivos
-make format-black-list  # Lista archivos que necesitan formato
-make format-ruff        # Formatea código con ruff
-make format-ruff-check  # Verifica formato con ruff
+make format-black      # Formatea con Black
+make format-black-check # Verifica sin modificar
+make format-ruff       # Formatea con Ruff
+make format-ruff-check # Verifica con Ruff
 ```
 
 ### Utilidades
 
 ```bash
 make tree              # Muestra estructura del proyecto
-make help              # Muestra todos los comandos disponibles
+make help              # Listado de todos los comandos
+make run-test          # Ejecuta pytest
 ```
 
-# Calidad de código
+---
 
-## Resultados de pylint
+## Arquitectura de Código
 
-pylint_report.txt
-Your code has been rated at 10.00/10 (previous run: 9.95/10, +0.05)
+### Principios de diseño
 
-![alt text](image-3.png)
+1. **Modularidad:** Cada paso del pipeline es un módulo independiente
+2. **Testabilidad:** Funciones puras sin efectos secundarios
+3. **Configurabilidad:** Argumentos CLI en lugar de valores hardcodeados
+4. **Escalabilidad:** Containerización con Docker para reproducibilidad
+5. **Calidad:** Linting, formateo y tests automáticos
 
-## Resultados de Ruff
+### Flujo de datos
 
-![alt text](image-4.png)
+```
+raw data (CSV)
+    ↓
+[PREP] → validación + transformaciones
+    ↓
+parquet files (entrenamiento + validación)
+    ↓
+[TRAINING] → construir_modelo() → guardar modelo
+    ↓
+modelo.joblib
+    ↓
+[INFERENCE] → predecir() → guardar predicciones
+    ↓
+predicciones.csv
+```
 
-## Resultados de Black
+---
 
-![alt text](image-5.png)
+## Dependencias Principales
 
-## Nota sobre logs
+| Librería | Versión | Uso |
+|----------|---------|-----|
+| pandas | ≥3.0.0 | Manipulación de datos |
+| numpy | ≥2.4.1 | Operaciones numéricas |
+| scikit-learn | ≥1.8.0 | Modelado y evaluación |
+| joblib | (via sklearn) | Serialización de modelos |
+| pyarrow | ≥23.0.0 | Archivos Parquet |
+| pytest | (via pyproject.toml) | Tests unitarios |
+| black | ≥26.1.0 | Formateo de código |
+| pylint | ≥4.0.4 | Análisis de código |
+| ruff | ≥0.15.0 | Formateo y linting |
 
-Los logs de ejecución de los scripts se encuentran en la carpeta `artifacts/logs/` con nombres que incluyen la fecha y hora de ejecución para facilitar su identificación. Estos logs contienen información detallada sobre el proceso de preparación de datos, entrenamiento e inferencia, incluyendo métricas, errores y advertencias.
+---
 
-![alt text](image-6.png)
+## Calidad de Código
 
-## Dependencias principales
+### Resultados de análisis estático
 
-- pandas    # para manipulación de datos
-- numpy    # para operaciones numéricas
-- scikit-learn  # para modelado y evaluación
-- joblib    # para guardar y cargar modelos
-- logging   # para registro de eventos y errores
-- pylint    # para análisis de código
-- black   # para formateo de código
-- ruff  # para análisis y formateo de código
-- pyarrow   # para manejo de archivos parquet
-- uv    # para gestión de dependencias
-- boto3   # para demo de integración con AWS
-- matplotlib   # para visualización en notebooks 
+- **Pylint:** 10.00/10
+- **Black:** Conforme
+- **Ruff:** Conforme
+
+### Cobertura de tests
+
+```
+src/training/test/ — 8/8 tests ✓ (100%)
+src/inference/test/ — 5/5 tests ✓ (100%)
+```
+
+---
+
+## Logs de Ejecución
+
+Los logs de cada ejecución se guardan en `artifacts/logs/` con timestamps:
+
+```bash
+artifacts/logs/
+├── training_20260228_120000.log
+├── inference_20260228_120500.log
+└── prep_20260228_120100.log
+```
+
+Cada log contiene:
+- Timestamp de inicio/fin
+- Métricas de desempeño (RMSE, mejora, etc.)
+- Errores y advertencias
+- Rutas de archivos generados
+
+---
+
+## Notas Importantes
+
+### PYTHONPATH en Docker
+
+El `PYTHONPATH=/app/src` en los Dockerfiles permite que Python encuentre los módulos:
+- `training`, `inference`, `utils` directamente en imports
+- Consistente con la configuración de pytest en `pyproject.toml`
+
+### Argparse vs CLI directo
+
+Todos los módulos usan `__main__.py` con argparse para CLI consistente:
+```bash
+python -m training --modelo random_forest --n-estimators 200
+python -m inference --datos data/inference/nuevos.parquet
+```
+
+### Separación de I/O y lógica
+
+Las funciones en `train.py` e `inference.py` son **puras** (sin I/O):
+- `preparar_datos(df)` ← recibe DataFrame en memoria
+- `construir_modelo(tipo)` ← retorna instancia de modelo
+- `predecir(modelo, datos)` ← no accede a archivos
+
+El I/O (read/write de archivos) ocurre en `main()`.
+
+---
+
+## Contacto y Contribuciones
+
+Para sugerencias o reportes de bugs, crear un Issue o Pull Request en el repositorio.
+
+---
+
+**Última actualización:** Febrero 2026
