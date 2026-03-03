@@ -34,6 +34,7 @@ PATH_OUT_INFER = "data/inference/datos_inferencia.parquet"
 
 # función para generar la matriz base de mes-tienda-item
 
+
 def generar_grid_base(df_entrenamiento):
     """Genera las combinaciones de mes-tienda-item."""
     grid = []
@@ -76,10 +77,7 @@ def agregar_historia(datos, meses_atras, columna_base):
         desplazado["date_block_num"] += mes
 
         datos = pd.merge(
-            datos,
-            desplazado,
-            on=["date_block_num", "shop_id", "item_id"],
-            how="left"
+            datos, desplazado, on=["date_block_num", "shop_id", "item_id"], how="left"
         )
     return datos
 
@@ -88,8 +86,17 @@ def agregar_historia(datos, meses_atras, columna_base):
 # EJECUCIÓN PRINCIPAL
 ###########################################################################
 
-def main(items_path: str, categories_path: str, shops_path: str, train_path: str,
-         test_path: str, out_train: str, out_val: str, out_infer: str):
+
+def main(
+    items_path: str,
+    categories_path: str,
+    shops_path: str,
+    train_path: str,
+    test_path: str,
+    out_train: str,
+    out_val: str,
+    out_infer: str,
+):
     """
     Ejecuta el pipeline principal de preprocesamiento de datos.
     """
@@ -134,8 +141,7 @@ def main(items_path: str, categories_path: str, shops_path: str, train_path: str
         filas_antes = len(datos_entrenamiento)
 
         datos_entrenamiento = (
-            datos_entrenamiento
-            .query("item_price > 0")  # Eliminar precios negativos
+            datos_entrenamiento.query("item_price > 0")  # Eliminar precios negativos
             .query("item_price < 100000")  # Eliminar precios muy altos
             .query("item_cnt_day < 1000")  # Eliminar ventas diarias excesivas
             .drop_duplicates()
@@ -171,9 +177,7 @@ def main(items_path: str, categories_path: str, shops_path: str, train_path: str
 
         # Incluimos las ventas por mes
         ventas_agrupadas = (
-            datos_entrenamiento.groupby(
-                ["date_block_num", "shop_id", "item_id"]
-            )
+            datos_entrenamiento.groupby(["date_block_num", "shop_id", "item_id"])
             .agg(item_cnt_month=("item_cnt_day", "sum"))
             .reset_index()
         )
@@ -187,10 +191,9 @@ def main(items_path: str, categories_path: str, shops_path: str, train_path: str
         matriz_ventas = pd.merge(
             matriz_ventas, ventas_agrupadas, on=cols, how="left"
         ).assign(
-            item_cnt_month=lambda df: df["item_cnt_month"]
-            .fillna(0)
-            .clip(0, 20)
-            .astype(np.float16)
+            item_cnt_month=lambda df: (
+                df["item_cnt_month"].fillna(0).clip(0, 20).astype(np.float16)
+            )
         )
 
         logger.info(
@@ -207,9 +210,7 @@ def main(items_path: str, categories_path: str, shops_path: str, train_path: str
         logger.info("Integrando datos de prueba...")
 
         datos_prueba = (
-            pd.read_csv(test_path)
-            .assign(date_block_num=34)
-            .pipe(optimizar_tipos)
+            pd.read_csv(test_path).assign(date_block_num=34).pipe(optimizar_tipos)
         )
 
         # Unión de datos_prueba con matriz consolidada
@@ -222,9 +223,7 @@ def main(items_path: str, categories_path: str, shops_path: str, train_path: str
         logger.info("Generando variables de meses de historia ...")
 
         matriz_ventas = matriz_ventas.pipe(
-            agregar_historia,
-            meses_atras=[1, 2, 3, 12],
-            columna_base="item_cnt_month"
+            agregar_historia, meses_atras=[1, 2, 3, 12], columna_base="item_cnt_month"
         ).fillna(0)
 
         # #### GUARDANDO DATASETS
@@ -239,9 +238,8 @@ def main(items_path: str, categories_path: str, shops_path: str, train_path: str
         # Logger de tiempo de ejecución
         duration = time.time() - start_time
         logger.info(
-            "Proceso finalizado con éxito. "
-            "Tiempo de ejecución: %.2f segundos",
-            duration
+            "Proceso finalizado con éxito. Tiempo de ejecución: %.2f segundos",
+            duration,
         )
 
     # Logger de errores críticos
@@ -257,30 +255,51 @@ def main(items_path: str, categories_path: str, shops_path: str, train_path: str
 if __name__ == "__main__":
     import argparse
 
-    parser = argparse.ArgumentParser(description="Preparación de datos de ventas para modelo")
+    parser = argparse.ArgumentParser(
+        description="Preparación de datos de ventas para modelo"
+    )
 
     # Entradas
-    parser.add_argument("--items", type=str, default=PATH_ITEMS,
-                        help="Ruta al archivo items_en.csv")
-    parser.add_argument("--categories", type=str, default=PATH_CATEGORIES,
-                        help="Ruta al archivo categorias")
-    parser.add_argument("--shops", type=str, default=PATH_SHOPS,
-                        help="Ruta al archivo tiendas")
-    parser.add_argument("--train", type=str, default=PATH_TRAIN,
-                        help="Ruta al archivo de entrenamiento")
-    parser.add_argument("--test", type=str, default=PATH_TEST,
-                        help="Ruta al archivo test")
+    parser.add_argument(
+        "--items", type=str, default=PATH_ITEMS, help="Ruta al archivo items_en.csv"
+    )
+    parser.add_argument(
+        "--categories",
+        type=str,
+        default=PATH_CATEGORIES,
+        help="Ruta al archivo categorias",
+    )
+    parser.add_argument(
+        "--shops", type=str, default=PATH_SHOPS, help="Ruta al archivo tiendas"
+    )
+    parser.add_argument(
+        "--train", type=str, default=PATH_TRAIN, help="Ruta al archivo de entrenamiento"
+    )
+    parser.add_argument(
+        "--test", type=str, default=PATH_TEST, help="Ruta al archivo test"
+    )
 
     # Salidas
-    parser.add_argument("--out-train", type=str, default=PATH_OUT_TRAIN,
-                        help="Ruta para datos de entrenamiento")
-    parser.add_argument("--out-val", type=str, default=PATH_OUT_VAL,
-                        help="Ruta para datos de validacion")
-    parser.add_argument("--out-infer", type=str, default=PATH_OUT_INFER,
-                        help="Ruta para datos de inferencia")
+    parser.add_argument(
+        "--out-train",
+        type=str,
+        default=PATH_OUT_TRAIN,
+        help="Ruta para datos de entrenamiento",
+    )
+    parser.add_argument(
+        "--out-val",
+        type=str,
+        default=PATH_OUT_VAL,
+        help="Ruta para datos de validacion",
+    )
+    parser.add_argument(
+        "--out-infer",
+        type=str,
+        default=PATH_OUT_INFER,
+        help="Ruta para datos de inferencia",
+    )
 
     args = parser.parse_args()
-
 
     main(
         items_path=args.items,
@@ -290,5 +309,5 @@ if __name__ == "__main__":
         test_path=args.test,
         out_train=args.out_train,
         out_val=args.out_val,
-        out_infer=args.out_infer
+        out_infer=args.out_infer,
     )

@@ -33,18 +33,18 @@ def configurar_logger(nombre_modulo=None):
     # Crear handlers
     file_handler = logging.FileHandler(log_filename)
     console_handler = logging.StreamHandler()
-    
+
     # Formato para ambos handlers
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     file_handler.setFormatter(formatter)
     console_handler.setFormatter(formatter)
-    
+
     # Configurar el logger específico
     logger = logging.getLogger(nombre_modulo)
     logger.setLevel(logging.INFO)
     logger.addHandler(file_handler)
     logger.addHandler(console_handler)
-    
+
     return logger

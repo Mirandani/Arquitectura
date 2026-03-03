@@ -21,17 +21,21 @@ RUTA_MODELO_ENTRENADO = "artifacts/models/modelo_random_forest.joblib"
 RUTA_DATOS_INFERENCIA = "data/inference/datos_inferencia.parquet"
 RUTA_PREDICCIONES = "data/predictions/predicciones_batch.csv"
 
+
 def caragar_datos_inferencia(ruta_datos: str) -> pd.DataFrame:
     """Carga los datos de inferencia desde un archivo Parquet."""
     logger = configurar_logger(__name__)
     try:
         logger.info("Cargando datos de inferencia desde: %s", ruta_datos)
         datos = pd.read_parquet(ruta_datos)
-        logger.info("Datos cargados exitosamente: %s registros", format(len(datos), ","))
+        logger.info(
+            "Datos cargados exitosamente: %s registros", format(len(datos), ",")
+        )
         return datos
     except Exception as e:
         logger.error("Error al cargar los datos de inferencia: %s", e)
         raise
+
 
 def preparar_datos_inferencia(df: pd.DataFrame) -> pd.DataFrame:
     """Prepara los datos de inferencia eliminando la columna objetivo si está presente."""
@@ -41,6 +45,7 @@ def preparar_datos_inferencia(df: pd.DataFrame) -> pd.DataFrame:
         logger.info("Columna 'item_cnt_month' eliminada de los datos de inferencia")
     return df
 
+
 def cargar_modelo_entrenado(ruta_modelo: str):
     """Carga el modelo entrenado desde la ruta especificada."""
     logger = configurar_logger(__name__)
@@ -48,6 +53,7 @@ def cargar_modelo_entrenado(ruta_modelo: str):
     modelo = cargar_modelo(ruta_modelo)
     logger.info("Modelo cargado exitosamente")
     return modelo
+
 
 def generar_predicciones(modelo, datos):
     """Genera predicciones utilizando el modelo cargado."""
@@ -57,12 +63,14 @@ def generar_predicciones(modelo, datos):
     logger.info("Predicciones completadas: %s valores", len(predicciones))
     return predicciones
 
+
 def guardar_predicciones(datos, columnas, ruta_salida):
     """Guarda las predicciones en un archivo CSV."""
     logger = configurar_logger(__name__)
     logger.info("Guardando predicciones en: %s", ruta_salida)
     _guardar_predicciones(datos, columnas, ruta_salida)
     logger.info("Predicciones guardadas exitosamente en: %s", ruta_salida)
+
 
 def resumen_predicciones(predicciones):
     """Genera un resumen estadístico de las predicciones."""
@@ -78,9 +86,10 @@ def resumen_predicciones(predicciones):
     )
     return resumen
 
+
 def main(
     ruta_modelo: str = RUTA_MODELO_ENTRENADO,
-    ruta_datos:  str = RUTA_DATOS_INFERENCIA,
+    ruta_datos: str = RUTA_DATOS_INFERENCIA,
     ruta_salida: str = RUTA_PREDICCIONES,
 ) -> None:
 

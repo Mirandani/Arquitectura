@@ -1,0 +1,25 @@
+2026-03-01 13:17:46,203 - inference.inference - INFO - Columna 'item_cnt_month' eliminada de los datos de inferencia
+2026-03-01 13:17:46,205 - inference.inference - INFO - Realizando predicciones batch...
+2026-03-01 13:17:46,205 - inference.inference - INFO - Realizando predicciones batch...
+2026-03-01 13:17:46,205 - inference.inference - INFO - Realizando predicciones batch...
+2026-03-01 13:17:46,206 - inference.inference - INFO - Predicciones completadas: 2 valores
+2026-03-01 13:17:46,206 - inference.inference - INFO - Predicciones completadas: 2 valores
+2026-03-01 13:17:46,206 - inference.inference - INFO - Predicciones completadas: 2 valores
+2026-03-01 13:17:46,206 - inference.inference - INFO - Generando resumen estadístico de las predicciones...
+2026-03-01 13:17:46,206 - inference.inference - INFO - Generando resumen estadístico de las predicciones...
+2026-03-01 13:17:46,206 - inference.inference - INFO - Generando resumen estadístico de las predicciones...
+2026-03-01 13:17:46,206 - inference.inference - INFO - Generando resumen estadístico de las predicciones...
+2026-03-01 13:17:46,207 - inference.inference - INFO - Resumen predicciones - Media: 3.00 | Mediana: 3.00 | Min: 1.00 | Max: 5.00
+2026-03-01 13:17:46,207 - inference.inference - INFO - Resumen predicciones - Media: 3.00 | Mediana: 3.00 | Min: 1.00 | Max: 5.00
+2026-03-01 13:17:46,207 - inference.inference - INFO - Resumen predicciones - Media: 3.00 | Mediana: 3.00 | Min: 1.00 | Max: 5.00
+2026-03-01 13:17:46,207 - inference.inference - INFO - Resumen predicciones - Media: 3.00 | Mediana: 3.00 | Min: 1.00 | Max: 5.00
+2026-03-01 13:17:46,210 - inference.inference - INFO - Guardando predicciones en: /tmp/pytest-of-azuce1203/pytest-0/test_guardar_predicciones0/predicciones_test.csv
+2026-03-01 13:17:46,210 - inference.inference - INFO - Guardando predicciones en: /tmp/pytest-of-azuce1203/pytest-0/test_guardar_predicciones0/predicciones_test.csv
+2026-03-01 13:17:46,210 - inference.inference - INFO - Guardando predicciones en: /tmp/pytest-of-azuce1203/pytest-0/test_guardar_predicciones0/predicciones_test.csv
+2026-03-01 13:17:46,210 - inference.inference - INFO - Guardando predicciones en: /tmp/pytest-of-azuce1203/pytest-0/test_guardar_predicciones0/predicciones_test.csv
+2026-03-01 13:17:46,210 - inference.inference - INFO - Guardando predicciones en: /tmp/pytest-of-azuce1203/pytest-0/test_guardar_predicciones0/predicciones_test.csv
+2026-03-01 13:17:46,217 - inference.inference - INFO - Predicciones guardadas exitosamente en: /tmp/pytest-of-azuce1203/pytest-0/test_guardar_predicciones0/predicciones_test.csv
+2026-03-01 13:17:46,217 - inference.inference - INFO - Predicciones guardadas exitosamente en: /tmp/pytest-of-azuce1203/pytest-0/test_guardar_predicciones0/predicciones_test.csv
+2026-03-01 13:17:46,217 - inference.inference - INFO - Predicciones guardadas exitosamente en: /tmp/pytest-of-azuce1203/pytest-0/test_guardar_predicciones0/predicciones_test.csv
+2026-03-01 13:17:46,217 - inference.inference - INFO - Predicciones guardadas exitosamente en: /tmp/pytest-of-azuce1203/pytest-0/test_guardar_predicciones0/predicciones_test.csv
+2026-03-01 13:17:46,217 - inference.inference - INFO - Predicciones guardadas exitosamente en: /tmp/pytest-of-azuce1203/pytest-0/test_guardar_predicciones0/predicciones_test.csv

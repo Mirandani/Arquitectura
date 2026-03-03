@@ -12,23 +12,30 @@ from training.train import (
 
 parser = argparse.ArgumentParser(description="Entrenamiento de modelo de ML")
 
-parser.add_argument("--entrada",      default=PATH_DATOS_ENTRENAMIENTO,
-                    help="Ruta al parquet de entrenamiento")
-parser.add_argument("--validacion",   default=PATH_DATOS_VALIDACION,
-                    help="Ruta al parquet de validación")
-parser.add_argument("--salida",       default=PATH_MODELO_ENTRENADO,
-                    help="Ruta donde guardar el modelo (.joblib)")
+parser.add_argument(
+    "--entrada",
+    default=PATH_DATOS_ENTRENAMIENTO,
+    help="Ruta al parquet de entrenamiento",
+)
+parser.add_argument(
+    "--validacion", default=PATH_DATOS_VALIDACION, help="Ruta al parquet de validación"
+)
+parser.add_argument(
+    "--salida",
+    default=PATH_MODELO_ENTRENADO,
+    help="Ruta donde guardar el modelo (.joblib)",
+)
 
 parser.add_argument("--modelo-baseline", default="linear",
                     choices=MODELOS_DISPONIBLES,
                     help="Tipo de modelo baseline (para comparación)")
-parser.add_argument("--modelo-principal", default="random_forest",
+parser.add_argument("--modelo-principal", default="xgboost",
                     choices=MODELOS_DISPONIBLES,
                     help="Tipo de modelo principal (a guardar)")
 
-parser.add_argument("--n-estimators", default=50,  type=int,
+parser.add_argument("--n-estimators", default=100,  type=int,
                     help="Número de árboles (solo random_forest)")
-parser.add_argument("--max-depth",    default=10,  type=int,
+parser.add_argument("--max-depth",    default=6,  type=int,
                     help="Profundidad máxima (solo random_forest)")
 parser.add_argument("--random-state", default=42,  type=int,
                     help="Semilla para reproducibilidad")
@@ -36,12 +43,12 @@ parser.add_argument("--random-state", default=42,  type=int,
 args = parser.parse_args()
 
 main(
-    entrada          = args.entrada,
-    validacion       = args.validacion,
-    salida           = args.salida,
-    modelo_baseline  = args.modelo_baseline,
-    modelo_principal = args.modelo_principal,
-    n_estimators     = args.n_estimators,
-    max_depth        = args.max_depth,
-    random_state     = args.random_state,
+    entrada=args.entrada,
+    validacion=args.validacion,
+    salida=args.salida,
+    modelo_baseline=args.modelo_baseline,
+    modelo_principal=args.modelo_principal,
+    n_estimators=args.n_estimators,
+    max_depth=args.max_depth,
+    random_state=args.random_state,
 )
