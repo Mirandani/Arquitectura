@@ -359,6 +359,9 @@ uv run pytest -v src/inference/test
 
 # Con cobertura
 uv run pytest --cov=src src/
+
+# Ejecución de test con makefile
+make run-test
 ```
 
 ### Estructura de tests
@@ -383,6 +386,10 @@ Cada módulo tiene tests unitarios que prueban **funciones puras** con datos sin
 - `test_guardar_predicciones` ✓
 
 ---
+#### 100% Cobertura de las pruebas unitarias
+![alt text](image-9.png)
+
+
 
 ## Comandos de Desarrollo (Makefile)
 
@@ -535,6 +542,6 @@ Para sugerencias o reportes de bugs, crear un Issue o Pull Request en el reposit
 
 ---
 
-**Última actualización:** Febrero 2026
+**Última actualización:** Marzo 2026
 
 
