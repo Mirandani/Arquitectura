@@ -16,8 +16,8 @@ from utils.logger import configurar_logger
 
 # Constantes — valores por defecto; pueden sobreescribirse mediante argumentos CLI
 PATH_DATOS_ENTRENAMIENTO = "data/prep/datos_entreno.parquet"
-PATH_DATOS_VALIDACION    = "data/prep/datos_validacion.parquet"
-PATH_MODELO_ENTRENADO    = "artifacts/models/modelo_random_forest.joblib"
+PATH_DATOS_VALIDACION = "data/prep/datos_validacion.parquet"
+PATH_MODELO_ENTRENADO = "artifacts/models/modelo_random_forest.joblib"
 
 MODELOS_DISPONIBLES = ["random_forest", "linear"]
 
@@ -40,14 +40,17 @@ def preparar_datos_entrenamiento_validacion(
     """
     logger = configurar_logger(__name__)
 
-    for nombre, df in [("entrenamiento", datos_entrenamiento), ("validación", datos_validacion)]:
+    for nombre, df in [
+        ("entrenamiento", datos_entrenamiento),
+        ("validación", datos_validacion),
+    ]:
         if columna_target not in df.columns:
             raise ValueError(
                 f"Columna target '{columna_target}' no encontrada en datos de {nombre}."
             )
 
-    X_entreno    = datos_entrenamiento.drop([columna_target], axis=1)
-    Y_entreno    = datos_entrenamiento[columna_target]
+    X_entreno = datos_entrenamiento.drop([columna_target], axis=1)
+    Y_entreno = datos_entrenamiento[columna_target]
     X_validacion = datos_validacion.drop([columna_target], axis=1)
     Y_validacion = datos_validacion[columna_target]
 
@@ -62,7 +65,7 @@ def preparar_datos_entrenamiento_validacion(
 def construir_modelo(
     tipo_modelo: str,
     n_estimators: int = 50,
-    max_depth: int    = 10,
+    max_depth: int = 10,
     random_state: int = 42,
 ):
     """Construye y retorna el modelo según el tipo especificado.
@@ -93,21 +96,21 @@ def construir_modelo(
 
 
 def main(
-    entrada:              str = PATH_DATOS_ENTRENAMIENTO,
-    validacion:           str = PATH_DATOS_VALIDACION,
-    salida:               str = PATH_MODELO_ENTRENADO,
-    modelo_baseline:      str = "linear",
-    modelo_principal:     str = "random_forest",
-    n_estimators:         int = 50,
-    max_depth:            int = 10,
-    random_state:         int = 42,
+    entrada: str = PATH_DATOS_ENTRENAMIENTO,
+    validacion: str = PATH_DATOS_VALIDACION,
+    salida: str = PATH_MODELO_ENTRENADO,
+    modelo_baseline: str = "linear",
+    modelo_principal: str = "random_forest",
+    n_estimators: int = 50,
+    max_depth: int = 10,
+    random_state: int = 42,
 ) -> None:
     logger = configurar_logger(__name__)
     logger.info("=== Inicio del proceso de entrenamiento de modelo ===")
 
     # Carga de datos
     datos_entrenamiento = pd.read_parquet(entrada)
-    datos_validacion    = pd.read_parquet(validacion)
+    datos_validacion = pd.read_parquet(validacion)
     logger.info(
         "Datos cargados — Entrenamiento: %s registros, Validación: %s registros",
         format(len(datos_entrenamiento), ","),

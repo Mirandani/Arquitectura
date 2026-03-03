@@ -65,12 +65,11 @@ Desarrollar un modelo escalable, testeable y containerizado que permita:
 │   │   ├── dtypes.py                    # Gestión de tipos de datos
 │   │   └── outputs.py                   # Exportación de resultados
 │   │
-│   ├── prep/                            # Módulo de preparación de datos
+│   ├── preprocessing/                   # Módulo de preprocesamiento
 │   │   ├── __init__.py
-│   │   ├── prep.py                      # Funciones puras de transformación
-│   │   └── test/
-│   │       ├── __init__.py
-│   │       └── test_prep.py             # Tests unitarios
+│   │   ├── Dockerfile                   # Imagen Docker para preprocessing
+│   │   ├── __main__.py                  # CLI con argparse
+│   │   └── preprocessing.py             # Funciones puras de transformación
 │   │
 │   ├── training/                        # Módulo de entrenamiento
 │   │   ├── __init__.py
@@ -102,14 +101,22 @@ Desarrollar un modelo escalable, testeable y containerizado que permita:
 
 ## Git Workflow
 
+![alt text](image-8.png)
+
 ### Rama principal: `main`
 - Código estable y testeado
 - Se actualiza solo mediante Pull Requests
 
-### Ramas de desarrollo
+### Ramas de desarrollo: 
+- `development` Integración (rama activa de desarrollo)
+- `feature`.    Integración (rama activa de desarrollo)
+
 ```bash
 git checkout -b feature/nombre-feature    # Rama para nuevas funcionalidades
 git checkout -b fix/nombre-bug            # Rama para correcciones
+git checkout development                  # Rama de desarrollo
+git pull origin devlopment                # Actualización de la rama
+
 ```
 
 ### Proceso de integración
@@ -158,33 +165,33 @@ uv run python -c "import pandas; print('✓ Dependencias instaladas')"
 ### Opción A: Sin Docker (local)
 
 ```bash
-# 1. Preparación de datos
-uv run python -m prep
+# 0. Preprocesamiento de datos (limpieza, ingeniería de características)
+uv run python -m preprocessing
 
-# 2. Entrenamiento con defaults
+# 1. Entrenamiento con defaults
 uv run python -m training
 
-# 3. Inferencia con defaults
+# 2. Inferencia con defaults
 uv run python -m inference
 ```
 
 ### Opción B: Con Docker (contenedores aislados)
 
-#### Paso 1: Preparación de datos
+#### Paso 0: Preprocesamiento de datos
 
 ```bash
 make docker-build-prep
 make docker-run-prep
 ```
 
-#### Paso 2: Entrenamiento con defaults
+#### Paso 1: Entrenamiento con defaults
 
 ```bash
 make docker-build-train
 make docker-run-train
 ```
 
-#### Paso 3: Inferencia con defaults
+#### Paso 2: Inferencia con defaults
 
 ```bash
 make docker-build-inference
@@ -194,6 +201,35 @@ make docker-run-inference
 ---
 
 ## Ejecución de Contenedores con Argumentos
+
+### Preprocessing — Rutas de Datos Configurables
+
+**Estructura base:**
+```bash
+make docker-run-prep \
+  ITEMS_PATH=data/raw/items_en.csv \
+  CATEGORIES_PATH=data/raw/item_categories_en.csv \
+  SHOPS_PATH=data/raw/shops_en.csv \
+  TRAIN_PATH=data/raw/sales_train.csv \
+  TEST_PATH=data/raw/test.csv \
+  OUT_TRAIN=data/prep/datos_entreno.parquet \
+  OUT_VAL=data/prep/datos_validacion.parquet \
+  OUT_INFER=data/inference/datos_inferencia.parquet
+```
+
+**Ejemplos:**
+
+```bash
+# Preprocesamiento con rutas customizadas
+make docker-run-prep \
+  TRAIN_PATH=data/raw/sales_train_full.csv \
+  OUT_TRAIN=data/prep/entreno_v2.parquet
+
+# Cambiar solo rutas de salida
+make docker-run-prep \
+  OUT_TRAIN=data/prep/entreno_completo.parquet \
+  OUT_VAL=data/prep/validacion_completo.parquet
+```
 
 ### Training — Modelos y Hiperparámetros Configurables
 
@@ -252,6 +288,19 @@ make docker-run-inference \
 
 ### Variables de configuración en el Makefile
 
+#### Preprocessing
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `ITEMS_PATH` | `data/raw/items_en.csv` | Catálogo de productos |
+| `CATEGORIES_PATH` | `data/raw/item_categories_en.csv` | Categorías de productos |
+| `SHOPS_PATH` | `data/raw/shops_en.csv` | Información de tiendas |
+| `TRAIN_PATH` | `data/raw/sales_train.csv` | Datos históricos de ventas |
+| `TEST_PATH` | `data/raw/test.csv` | Datos de prueba para inferencia |
+| `OUT_TRAIN` | `data/prep/datos_entreno.parquet` | Salida: datos de entrenamiento |
+| `OUT_VAL` | `data/prep/datos_validacion.parquet` | Salida: datos de validación |
+| `OUT_INFER` | `data/inference/datos_inferencia.parquet` | Salida: datos de inferencia |
+
+#### Training
 | Variable | Default | Descripción |
 |----------|---------|-------------|
 | `MODELO_BASE` | `linear` | Modelo baseline para comparación |
@@ -262,8 +311,35 @@ make docker-run-inference \
 | `ENTRADA` | `data/prep/datos_entreno.parquet` | Ruta datos entrenamiento |
 | `VALIDACION` | `data/prep/datos_validacion.parquet` | Ruta datos validación |
 | `SALIDA_TRAIN` | `artifacts/models/modelo_random_forest.joblib` | Ruta modelo guardado |
+
+#### Inference
+| Variable | Default | Descripción |
+|----------|---------|-------------|
 | `DATOS` | `data/inference/datos_inferencia.parquet` | Ruta datos inferencia |
 | `SALIDA` | `data/predictions/predicciones_batch.csv` | Ruta predicciones |
+
+---
+
+## Pipeline Completo: Ejecución Rápida
+
+Ejecuta todos los pasos en orden (preprocessing → training → inference):
+
+```bash
+# Con valores por defecto
+make docker-build-prep docker-build-train docker-build-inference && \
+make docker-run-prep && \
+make docker-run-train && \
+make docker-run-inference
+
+# Con parámetros personalizados
+make docker-build-prep docker-build-train docker-build-inference && \
+make docker-run-prep && \
+make docker-run-train \
+  MODELO_PRINCIPAL=random_forest \
+  N_ESTIMATORS=200 \
+  MAX_DEPTH=8 && \
+make docker-run-inference
+```
 
 ---
 
@@ -306,13 +382,6 @@ Cada módulo tiene tests unitarios que prueban **funciones puras** con datos sin
 - `test_resumen_predicciones` ✓
 - `test_guardar_predicciones` ✓
 
-### Filosofía de testing
-
-- ✅ **Funciones puras**: se testean con datos en memoria (sin archivos)
-- ✅ **Mock objects**: modelos dummy para aislar la lógica
-- ✅ **Sin I/O**: tests rápidos (<2 segundos)
-- ✅ **Cobertura**: funciones críticas de transformación y modelado
-
 ---
 
 ## Comandos de Desarrollo (Makefile)
@@ -333,12 +402,17 @@ make format-ruff       # Formatea con Ruff
 make format-ruff-check # Verifica con Ruff
 ```
 
+### Testing
+
+```bash
+make run-test          # Ejecuta pytest -v (todos los tests)
+```
+
 ### Utilidades
 
 ```bash
 make tree              # Muestra estructura del proyecto
-make help              # Listado de todos los comandos
-make run-test          # Ejecuta pytest
+make help              # Listado de todos los comandos disponibles
 ```
 
 ---
@@ -356,19 +430,22 @@ make run-test          # Ejecuta pytest
 ### Flujo de datos
 
 ```
-raw data (CSV)
+items.csv, categories.csv, shops.csv, sales_train.csv, test.csv
     ↓
-[PREP] → validación + transformaciones
+[PREPROCESSING] → merge tables + validación + feature engineering
     ↓
-parquet files (entrenamiento + validación)
+parquet files
+    ├── datos_entreno.parquet (80%)
+    ├── datos_validacion.parquet (20%)
+    └── datos_inferencia.parquet (test)
     ↓
-[TRAINING] → construir_modelo() → guardar modelo
+[TRAINING] → preparar_datos() → construir_modelo() → evaluar()
     ↓
-modelo.joblib
+modelo_random_forest.joblib (se guarda el principal)
     ↓
-[INFERENCE] → predecir() → guardar predicciones
+[INFERENCE] → preparar_datos() → predecir() → resumen_predicciones()
     ↓
-predicciones.csv
+predicciones_batch.csv
 ```
 
 ---
@@ -459,3 +536,5 @@ Para sugerencias o reportes de bugs, crear un Issue o Pull Request en el reposit
 ---
 
 **Última actualización:** Febrero 2026
+
+
