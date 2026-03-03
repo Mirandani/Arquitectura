@@ -24,13 +24,13 @@ docker-build-train:
 #   make docker-run-train MODELO_BASE=random_forest MODELO_PRINCIPAL=linear
 #   make docker-run-train N_ESTIMATORS=200 MAX_DEPTH=6
 MODELO_BASE       ?= linear
-MODELO_PRINCIPAL  ?= random_forest
-N_ESTIMATORS      ?= 50
-MAX_DEPTH         ?= 10
+MODELO_PRINCIPAL  ?= xgboost
+N_ESTIMATORS      ?= 100
+MAX_DEPTH         ?= 6
 RANDOM_STATE      ?= 42
 ENTRADA           ?= data/prep/datos_entreno.parquet
 VALIDACION        ?= data/prep/datos_validacion.parquet
-SALIDA_TRAIN      ?= artifacts/models/modelo_random_forest.joblib
+SALIDA_TRAIN      ?= artifacts/models/modelo_xgboost.joblib
 
 docker-run-train:
 	# monta código, datos y artefactos para ejecutar entrenamiento
