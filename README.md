@@ -184,12 +184,16 @@ make docker-build-prep
 make docker-run-prep
 ```
 
+![alt text](src/preprocessing/docker_run_prep.png)
+
 #### Paso 1: Entrenamiento con defaults
 
 ```bash
 make docker-build-train
 make docker-run-train
 ```
+
+![alt text](src/training/docker_run_train.png)
 
 #### Paso 2: Inferencia con defaults
 
@@ -198,6 +202,9 @@ make docker-build-inference
 make docker-run-inference
 ```
 
+![alt text](src/inference/docker_build_inference.png)
+
+![alt text](src/inference/docker_run_inference.png)
 ---
 
 ## Ejecución de Contenedores con Argumentos
@@ -388,6 +395,92 @@ Cada módulo tiene tests unitarios que prueban **funciones puras** con datos sin
 ---
 #### 100% Cobertura de las pruebas unitarias
 ![alt text](image-9.png)
+
+---
+
+## Despliegue en AWS EC2
+
+### Configuración de la instancia
+
+#### 1. Crear instancia EC2 en AWS
+
+```bash
+# Requisitos mínimos:
+# - Imagen: Ubuntu 22.04 LTS (AMI)
+# - Tipo: t3.medium o superior
+# - Storage: 30 GB (gp3)
+# - Security Group: permitir SSH (puerto 22) y acceso interno
+```
+
+#### 2. Conectarse a la instancia
+
+```bash
+# Desde tu máquina local
+ssh -i "tu-key.pem" ubuntu@tu-instancia-ec2-ip
+```
+
+#### 3. Instalar Docker en la instancia
+
+```bash
+# Actualizar sistema
+sudo apt-get update
+sudo apt-get upgrade -y
+
+# Instalar Docker
+sudo apt-get install -y docker.io
+
+# Dar permisos al usuario ubuntu
+sudo usermod -aG docker ubuntu
+newgrp docker
+
+# Verificar instalación
+docker --version
+```
+
+#### 4. Clonar el repositorio en la instancia
+
+```bash
+cd /home/ubuntu
+git clone https://github.com/Mirandani/Arquitectura.git
+cd Arquitectura
+```
+
+### Ejecución del pipeline en producción
+
+#### Opción 1: Pipeline completo con defaults
+
+```bash
+# Construir todas las imágenes Docker
+make docker-build-prep docker-build-train docker-build-inference
+
+# Ejecutar pipeline completo
+make docker-run-prep && \
+make docker-run-train && \
+make docker-run-inference
+```
+
+#### Opción 2: Con parámetros personalizados
+
+```bash
+# Construir imágenes
+make docker-build-prep docker-build-train docker-build-inference
+
+# Ejecutar con modelos y hiperparámetros específicos
+make docker-run-prep && \
+make docker-run-train \
+  MODELO_BASE=linear \
+  MODELO_PRINCIPAL=random_forest \
+  N_ESTIMATORS=200 \
+  MAX_DEPTH=8 && \
+make docker-run-inference \
+  SALIDA=data/predictions/predicciones_produccion.csv
+```
+
+### Captura de pantalla — Ejecución en AWS EC2
+
+A continuación se muestra la ejecución del pipeline en una instancia EC2 con Ubuntu 22.04:
+
+![alt text](image-10.png)
 
 
 
