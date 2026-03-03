@@ -9,6 +9,7 @@ La salida del script es un modelo entrenado:
 """
 
 import pandas as pd
+from xgboost import XGBRegressor
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import LinearRegression
 from utils.model_tools import evaluar_modelo_rmse, guardar_modelo
@@ -16,10 +17,10 @@ from utils.logger import configurar_logger
 
 # Constantes — valores por defecto; pueden sobreescribirse mediante argumentos CLI
 PATH_DATOS_ENTRENAMIENTO = "data/prep/datos_entreno.parquet"
-PATH_DATOS_VALIDACION = "data/prep/datos_validacion.parquet"
-PATH_MODELO_ENTRENADO = "artifacts/models/modelo_random_forest.joblib"
+PATH_DATOS_VALIDACION    = "data/prep/datos_validacion.parquet"
+PATH_MODELO_ENTRENADO    = "artifacts/models/modelo_xgboost.joblib"
 
-MODELOS_DISPONIBLES = ["random_forest", "linear"]
+MODELOS_DISPONIBLES = ["random_forest", "linear", "xgboost"]
 
 
 def preparar_datos_entrenamiento_validacion(
@@ -71,10 +72,10 @@ def construir_modelo(
     """Construye y retorna el modelo según el tipo especificado.
 
     Args:
-        tipo_modelo:   Tipo de modelo ('random_forest' o 'linear').
-        n_estimators:  Número de árboles (solo para random_forest).
-        max_depth:     Profundidad máxima (solo para random_forest).
-        random_state:  Semilla para reproducibilidad (solo para random_forest).
+        tipo_modelo:   Tipo de modelo ('random_forest', 'linear', 'xgboost').
+        n_estimators:  Número de árboles (para random_forest y xgboost).
+        max_depth:     Profundidad máxima (para random_forest y xgboost).
+        random_state:  Semilla para reproducibilidad.
     Returns:
         Instancia del modelo sklearn lista para entrenar.
     Raises:
@@ -89,21 +90,29 @@ def construir_modelo(
         )
     elif tipo_modelo == "linear":
         return LinearRegression()
-    else:
+    elif tipo_modelo == "xgboost":             
+        return XGBRegressor(
+            n_estimators=n_estimators,
+            learning_rate=0.1,
+            max_depth=max_depth,
+            random_state=random_state,
+            n_jobs=-1
+        )
+    else:                                      
         raise ValueError(
             f"Modelo '{tipo_modelo}' no soportado. Opciones: {MODELOS_DISPONIBLES}"
         )
 
 
 def main(
-    entrada: str = PATH_DATOS_ENTRENAMIENTO,
-    validacion: str = PATH_DATOS_VALIDACION,
-    salida: str = PATH_MODELO_ENTRENADO,
-    modelo_baseline: str = "linear",
-    modelo_principal: str = "random_forest",
-    n_estimators: int = 50,
-    max_depth: int = 10,
-    random_state: int = 42,
+    entrada:              str = PATH_DATOS_ENTRENAMIENTO,
+    validacion:           str = PATH_DATOS_VALIDACION,
+    salida:               str = PATH_MODELO_ENTRENADO,
+    modelo_baseline:      str = "linear",
+    modelo_principal:     str = "xgboost",
+    n_estimators:         int = 100,
+    max_depth:            int = 6,
+    random_state:         int = 42,
 ) -> None:
     logger = configurar_logger(__name__)
     logger.info("=== Inicio del proceso de entrenamiento de modelo ===")
@@ -134,6 +143,18 @@ def main(
     model_base.fit(X_entreno, Y_entreno)
     error_base = evaluar_modelo_rmse(model_base, X_validacion, Y_validacion)
     logger.info("✓ RMSE %s (baseline): %.4f", modelo_baseline, error_base)
+
+    # Modelo comparativo
+    logger.info("Entrenando modelo comparativo — random_forest...")
+    modelo_rf = construir_modelo(
+        tipo_modelo="random_forest",
+        n_estimators=n_estimators, 
+        max_depth=max_depth,
+        random_state=random_state,
+    )
+    modelo_rf.fit(X_entreno, Y_entreno)
+    error_rf = evaluar_modelo_rmse(modelo_rf, X_validacion, Y_validacion)
+    logger.info("✓ RMSE random_forest (comparativo): %.4f", error_rf)
 
     # Modelo principal — el que se guarda
     logger.info("Entrenando modelo principal — %s...", modelo_principal)

@@ -26,31 +26,19 @@ parser.add_argument(
     help="Ruta donde guardar el modelo (.joblib)",
 )
 
-parser.add_argument(
-    "--modelo-baseline",
-    default="linear",
-    choices=MODELOS_DISPONIBLES,
-    help="Tipo de modelo baseline (para comparación)",
-)
-parser.add_argument(
-    "--modelo-principal",
-    default="random_forest",
-    choices=MODELOS_DISPONIBLES,
-    help="Tipo de modelo principal (a guardar)",
-)
+parser.add_argument("--modelo-baseline", default="linear",
+                    choices=MODELOS_DISPONIBLES,
+                    help="Tipo de modelo baseline (para comparación)")
+parser.add_argument("--modelo-principal", default="xgboost",
+                    choices=MODELOS_DISPONIBLES,
+                    help="Tipo de modelo principal (a guardar)")
 
-parser.add_argument(
-    "--n-estimators",
-    default=50,
-    type=int,
-    help="Número de árboles (solo random_forest)",
-)
-parser.add_argument(
-    "--max-depth", default=10, type=int, help="Profundidad máxima (solo random_forest)"
-)
-parser.add_argument(
-    "--random-state", default=42, type=int, help="Semilla para reproducibilidad"
-)
+parser.add_argument("--n-estimators", default=100,  type=int,
+                    help="Número de árboles (solo random_forest)")
+parser.add_argument("--max-depth",    default=6,  type=int,
+                    help="Profundidad máxima (solo random_forest)")
+parser.add_argument("--random-state", default=42,  type=int,
+                    help="Semilla para reproducibilidad")
 
 args = parser.parse_args()
 
