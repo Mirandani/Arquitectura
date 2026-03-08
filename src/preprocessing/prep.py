@@ -192,7 +192,7 @@ def main(
             matriz_ventas, ventas_agrupadas, on=cols, how="left"
         ).assign(
             item_cnt_month=lambda df: (
-                df["item_cnt_month"].fillna(0).clip(0, 20).astype(np.float16)
+                df["item_cnt_month"].fillna(0).clip(0, 20).astype(np.float32)
             )
         )
 
@@ -226,7 +226,25 @@ def main(
             agregar_historia, meses_atras=[1, 2, 3, 12], columna_base="item_cnt_month"
         ).fillna(0)
 
-        # #### GUARDANDO DATASETS
+        cols_historia = [f"item_cnt_month_mes_ant_{m}" for m in [1, 2, 3, 12]]
+        for col in cols_historia:
+            matriz_ventas[col] = matriz_ventas[col].astype(np.float32) 
+
+        # Corrección base
+        logger.info("Recuperando características y limpiando columnas...")
+
+        if "ID" in matriz_ventas.columns:
+            matriz_ventas = matriz_ventas.drop("ID", axis=1)
+
+        # Recuperar la categoría del artículo
+        matriz_ventas = pd.merge(
+            matriz_ventas, 
+            articulos[["item_id", "item_category_id"]], 
+            on="item_id", 
+            how="left"
+        )
+            
+        # ### GUARDANDO DATASETS
 
         # División de datos
         logger.info("Guardando datasets procesados...")
@@ -311,3 +329,5 @@ if __name__ == "__main__":
         out_val=args.out_val,
         out_infer=args.out_infer,
     )
+
+    
