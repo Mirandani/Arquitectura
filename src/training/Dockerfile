@@ -1,33 +1,65 @@
-# Dockerfile del modulo de entrenamiento de modelo de machine learning.  
-# Usa argumentos CLI
+# --------------------------------------------------------------------------
+# Base image
+# Ubuntu 22.04 provee un entorno Linux robusto con Python 3.10
+# --------------------------------------------------------------------------
+FROM ubuntu:22.04
 
-FROM python:3.13.12
+MAINTAINER Azucena <azucenaorduna@gmail.com>
 
-# Establecer variables de entorno para evitar problemas comunes con Python en contenedores
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    PYTHONPATH=/app/src
+# Evitar prompts interactivos durante la instalación de paquetes de Linux
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Establecer el directorio de trabajo dentro del contenedor
-WORKDIR /app
+# --------------------------------------------------------------------------
+# Dependencias del sistema
+# --------------------------------------------------------------------------
+RUN apt-get -y update && apt-get install -y --no-install-recommends \
+         wget \
+         python3 \
+         python3-pip \
+         python3-setuptools \
+         nginx \
+         ca-certificates \
+         build-essential \
+         libgcc-s1 \
+    && rm -rf /var/lib/apt/lists/*
 
-# Instalar uv en el contenedor
-RUN pip install --no-cache-dir uv
+# Crear aliases 'python' y 'pip' apuntando a las versiones Python 3.
+RUN ln -s /usr/bin/python3 /usr/bin/python
 
-# copiar archivos de configuración del proyecto
-COPY pyproject.toml uv.lock ./
+# --------------------------------------------------------------------------
+# Dependencias Python 
+# --no-cache-dir evita guardar el cache de pip en la imagen, reduciendo su tamaño.
+# Las versiones están fijadas para garantizar reproducibilidad.
+# --------------------------------------------------------------------------
+RUN pip3 --no-cache-dir install \
+    numpy==1.26.4 \
+    scipy==1.11.4 \
+    pandas==2.1.4 \
+    scikit-learn==1.3.2 \
+    xgboost==2.0.3 \
+    fastparquet==2023.10.1 \
+    flask==3.0.0 \
+    gunicorn==21.2.0 \
+    joblib==1.3.2
 
-# Instalar dependencias del proyecto usando uv
-# --frozen asegura que se instalen exactamente las versiones especificadas en uv.lock
-# --no-install-project evita que se instale el paquete del proyecto, lo que es útil para evitar problemas de dependencias circulares durante el desarrollo
-RUN uv sync --frozen --no-install-project
+# --------------------------------------------------------------------------
+# Variables de entorno
+# PATH: Agrega /opt/program al PATH para que SageMaker encuentre 'train' y 'serve'
+# --------------------------------------------------------------------------
+ENV PYTHONUNBUFFERED=TRUE
+ENV PYTHONDONTWRITEBYTECODE=TRUE
+ENV PATH="/opt/program:${PATH}"
 
-# copiar el código fuente, sin datos ni artefactos
-COPY ../../src/ ./src/
+# --------------------------------------------------------------------------
+# Código de la aplicación
+# Copia los scripts de entrenamiento e inferencia al directorio /opt/program.
+# SageMaker invoca 'train' o 'serve' dependiendo del tipo de job.
+# --------------------------------------------------------------------------
+COPY src/training /opt/program/
+COPY src/utils /opt/program/utils/
 
-# instalar las dependencias del proyecto, incluyendo el paquete del proyecto
-RUN uv sync --frozen
+WORKDIR /opt/program
 
-# arrancar siempre con uv; -m training ejecuta src/training/__main__.py (con argparse)
-# los argumentos de `docker run` se añaden al final del ENTRYPOINT
-ENTRYPOINT ["uv", "run", "--", "python", "-m", "training"]
+# Asegurar permisos de ejecución para los scripts de entrada
+RUN chmod +x /opt/program/train
+RUN chmod +x /opt/program/serve
