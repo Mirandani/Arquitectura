@@ -1,0 +1,131 @@
+#!/usr/bin/env python
+# Script de entrenamiento para SageMaker BYOC.
+#
+# SageMaker invoca este script ejecutando: docker run <image> train
+# El script lee los datos de entrenamiento, entrena modelos (XGBoost principal)
+# y guarda el modelo serializado en /opt/ml/model/.
+#
+# Estructura de inputs esperada en el filesystem del container:
+#
+#   /opt/ml/
+#   ├── input/
+#   │   ├── config/
+#   │   │   └── hyperparameters.json   # todos los valores son strings
+#   │   └── data/
+#   │       └── training/
+#   │           └── *.parquet          # Archivos parquet de datos.
+#   ├── model/                         # Aquí se escribe el modelo entrenado (.joblib)
+#   └── output/
+#       └── failure                    # Se escribe aquí si el training falla (lo lee SageMaker)
+#
+# Exit codes:
+#   0   → training exitoso (SageMaker marca el job como Succeeded)
+#   255 → training fallido (SageMaker marca el job como Failed y reporta el failure file)
+
+from __future__ import print_function
+
+import json
+import os
+import sys
+import traceback
+import pandas as pd
+from xgboost import XGBRegressor
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import LinearRegression
+from utils.model_tools import evaluar_modelo_rmse, guardar_modelo
+from utils.logger import configurar_logger
+
+# Paths estándar donde SageMaker monta los datos dentro del container.
+prefix = '/opt/ml/'
+
+input_path = prefix + 'input/data'
+output_path = os.path.join(prefix, 'output')
+model_path = os.path.join(prefix, 'model')
+param_path = os.path.join(prefix, 'input/config/hyperparameters.json')
+
+# SageMaker copia los datos del channel 'training' a este directorio (File mode).
+channel_name='training'
+training_path = os.path.join(input_path, channel_name)
+
+MODELOS_DISPONIBLES = ["random_forest", "linear", "xgboost"]
+
+def preparar_datos_entrenamiento_validacion(datos_entrenamiento, datos_validacion, columna_target="item_cnt_month"):
+    for nombre, df_datos in [("entrenamiento", datos_entrenamiento), ("validación", datos_validacion)]:
+        if columna_target not in df_datos.columns:
+            raise ValueError(f"Columna target '{columna_target}' no encontrada en datos de {nombre}.")
+
+    X_entreno = datos_entrenamiento.drop([columna_target], axis=1)
+    Y_entreno = datos_entrenamiento[columna_target]
+    X_validacion = datos_validacion.drop([columna_target], axis=1)
+    Y_validacion = datos_validacion[columna_target]
+
+    return X_entreno, Y_entreno, X_validacion, Y_validacion
+
+def construir_modelo(tipo_modelo, n_estimators=50, max_depth=10, random_state=42):
+    if tipo_modelo == "random_forest":
+        return RandomForestRegressor(n_estimators=n_estimators, max_depth=max_depth, random_state=random_state, n_jobs=-1)
+    if tipo_modelo == "linear":
+        return LinearRegression()
+    if tipo_modelo == "xgboost":
+        return XGBRegressor(n_estimators=n_estimators, learning_rate=0.1, max_depth=max_depth, random_state=random_state, n_jobs=-1)
+    raise ValueError(f"Modelo '{tipo_modelo}' no soportado. Opciones: {MODELOS_DISPONIBLES}")
+
+def train():
+    print('Starting the training.')
+    logger = configurar_logger(__name__)
+    
+    try:
+        n_estimators = 100
+        max_depth = 6
+        random_state = 42
+
+        # Leer los hyperparámetros pasados al training job.
+        # Nota: SageMaker siempre los pasa como strings — convertir al tipo necesario.
+        if os.path.exists(param_path):
+            with open(param_path, 'r') as tc:
+                trainingParams = json.load(tc)
+            
+            if "n_estimators" in trainingParams:
+                n_estimators = int(trainingParams["n_estimators"])
+            if "max_depth" in trainingParams:
+                val = trainingParams["max_depth"]
+                max_depth = None if val == "None" else int(val)
+
+        # Cargar datos. 
+        archivo_entreno = os.path.join(training_path, "datos_entreno.parquet")
+        archivo_validacion = os.path.join(training_path, "datos_validacion.parquet")
+        
+        if not os.path.exists(archivo_entreno) or not os.path.exists(archivo_validacion):
+             raise ValueError(('No se encontraron los archivos parquet en {}.\n' +
+                              'This usually indicates that the channel ({}) was incorrectly specified.').format(training_path, channel_name))
+
+        datos_entrenamiento = pd.read_parquet(archivo_entreno)
+        datos_validacion = pd.read_parquet(archivo_validacion)
+
+        X_entreno, Y_entreno, X_validacion, Y_validacion = preparar_datos_entrenamiento_validacion(datos_entrenamiento, datos_validacion)
+
+        # Entrenar el XGBRegressor
+        modelo = construir_modelo("xgboost", n_estimators=n_estimators, max_depth=max_depth, random_state=random_state)
+        modelo = modelo.fit(X_entreno, Y_entreno)
+        
+        error = evaluar_modelo_rmse(modelo, X_validacion, Y_validacion)
+        print(f"✓ RMSE xgboost (principal): {error:.4f}")
+
+        # Serializar el modelo y guardarlo en /opt/ml/model/.
+        # SageMaker comprime y sube este directorio a S3 al finalizar el training job.
+        ruta_salida = os.path.join(model_path, 'modelo_xgboost.joblib')
+        guardar_modelo(modelo, ruta_salida)
+        
+        print('Training complete.')
+    except Exception as e:
+        # Escribir el error en /opt/ml/output/failure.
+        # SageMaker lee este archivo y lo expone como failureReason en DescribeTrainingJob.
+        trc = traceback.format_exc()
+        with open(os.path.join(output_path, 'failure'), 'w') as s:
+            s.write('Exception during training: ' + str(e) + '\n' + trc)
+        print('Exception during training: ' + str(e) + '\n' + trc, file=sys.stderr)
+        sys.exit(255)
+
+if __name__ == '__main__':
+    train()
+    sys.exit(0)

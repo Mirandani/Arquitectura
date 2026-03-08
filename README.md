@@ -635,6 +635,212 @@ Para sugerencias o reportes de bugs, crear un Issue o Pull Request en el reposit
 
 ---
 
+---
+
+## Despliegue en AWS SageMaker (BYOC)
+
+Esta sección documenta el flujo de entrenamiento e inferencia usando **Bring Your Own Container (BYOC)** en SageMaker. A diferencia del pipeline local/EC2, aquí SageMaker gestiona el cómputo, los datos y el ciclo de vida del modelo.
+
+### Archivos involucrados
+
+| Archivo | Descripción |
+|---------|-------------|
+| `src/training/Dockerfile` | Imagen Docker basada en Ubuntu 22.04 con XGBoost, Flask y Gunicorn |
+| `src/training/build_and_push.sh` | Build de la imagen y push a Amazon ECR |
+| `src/training/train` | Script de entrenamiento ejecutado por SageMaker (`docker run <image> train`) |
+| `src/training/serve` | Arranca nginx + gunicorn para servir el endpoint (`docker run <image> serve`) |
+| `src/training/predictor.py` | Servidor Flask con endpoints `/ping` e `/invocations` |
+
+---
+
+### Requisitos previos
+
+- AWS CLI configurado con credenciales activas (`aws configure`)
+- Permisos IAM: `AmazonECR*`, `AmazonSageMaker*`
+- Docker instalado y corriendo localmente
+- Python con boto3 instalado (`uv sync`)
+
+---
+
+### Paso 1: Build y push de la imagen a ECR
+
+```bash
+bash src/training/build_and_push.sh <nombre-imagen>
+```
+
+El script automáticamente:
+1. Obtiene el Account ID y región de las credenciales AWS activas
+2. Crea el repositorio en ECR si no existe
+3. Autentica Docker contra ECR
+4. Construye la imagen desde `src/training/Dockerfile`
+5. Tagea y sube la imagen a ECR
+
+La imagen resultante queda en:
+```
+<account>.dkr.ecr.<region>.amazonaws.com/<nombre-imagen>:latest
+```
+
+> **Nota:** El flag `--network sagemaker` en el build es requerido si ejecutas desde SageMaker Studio.
+
+---
+
+### Paso 2: Training Job en SageMaker
+
+SageMaker ejecuta `docker run <image> train` y monta los datos automáticamente desde S3.
+
+#### Contrato de directorios dentro del contenedor
+
+| Ruta | Contenido |
+|------|-----------|
+| `/opt/ml/input/data/training/` | `datos_entreno.parquet` y `datos_validacion.parquet` (montados desde S3) |
+| `/opt/ml/input/config/hyperparameters.json` | Hiperparámetros del job (todos como strings) |
+| `/opt/ml/model/` | Modelo entrenado (`modelo_xgboost.joblib`) — SageMaker lo sube a S3 al finalizar |
+| `/opt/ml/output/failure` | Mensaje de error si el job falla (visible en `DescribeTrainingJob`) |
+
+#### Hiperparámetros soportados
+
+| Parámetro | Tipo | Default | Descripción |
+|-----------|------|---------|-------------|
+| `n_estimators` | int | `100` | Número de árboles XGBoost |
+| `max_depth` | int / `"None"` | `6` | Profundidad máxima de los árboles |
+
+#### Ejemplo con SageMaker Python SDK
+
+```python
+import sagemaker
+from sagemaker import get_execution_role
+
+# Configuración de sesión
+sess = sagemaker.Session()
+role = get_execution_role()
+account = sess.boto_session.client("sts").get_caller_identity()["Account"]
+region = sess.boto_session.region_name
+
+# Subir datos de entrenamiento a S3
+prefix = "retail-sales-xgboost-byoc-v3"
+data_location = sess.upload_data("data/prep", bucket=sess.default_bucket(), key_prefix=prefix)
+
+# Definir imagen y ruta de salida
+image_name = "sagemaker-xgboost-byoc"
+image_uri = f"{account}.dkr.ecr.{region}.amazonaws.com/{image_name}:latest"
+s3_output_path = f"s3://{sess.default_bucket()}/{prefix}/output"
+
+# Crear estimator y lanzar el training job
+xgb_estimator = sagemaker.estimator.Estimator(
+    image_uri=image_uri,
+    role=role,
+    instance_count=1,
+    instance_type="ml.m5.large",
+    output_path=s3_output_path,
+    sagemaker_session=sess,
+    hyperparameters={
+        "n_estimators": "150",
+        "max_depth": "8",
+    },
+)
+
+xgb_estimator.fit({"training": data_location})
+```
+
+#### Exit codes del script `train`
+
+| Código | Significado |
+|--------|-------------|
+| `0` | Training exitoso → job `Succeeded` |
+| `255` | Error → job `Failed`, razón en `/opt/ml/output/failure` |
+
+---
+
+### Paso 3: Endpoint de inferencia
+
+SageMaker ejecuta `docker run <image> serve`, que levanta el stack:
+
+```
+SageMaker → nginx (proxy reverso) → gunicorn (socket Unix) → Flask (predictor.py)
+```
+
+#### Variables de entorno del servidor
+
+| Variable | Default | Descripción |
+|----------|---------|-------------|
+| `MODEL_SERVER_WORKERS` | núcleos de CPU | Número de workers de gunicorn |
+| `MODEL_SERVER_TIMEOUT` | `60` | Timeout en segundos por request |
+
+#### Endpoints del servidor Flask
+
+**`GET /ping`** — Health check
+```
+200 → modelo cargado correctamente
+404 → modelo no disponible
+```
+
+**`POST /invocations`** — Inferencia
+```
+Content-Type: text/csv
+Body: datos sin header, una fila por predicción
+
+Response (200): CSV con una predicción por línea
+Response (415): si el Content-Type no es text/csv
+```
+
+#### Ejemplo de deploy e invocación
+
+```python
+import pandas as pd
+from sagemaker.serializers import CSVSerializer
+
+# Deploy del modelo entrenado
+predictor = xgb_estimator.deploy(
+    initial_instance_count=1,
+    instance_type="ml.m5.large",
+    serializer=CSVSerializer(),
+)
+
+# Preparar muestra de datos (sin columna target)
+df_val = pd.read_parquet("data/prep/datos_validacion.parquet")
+X_sample = df_val.drop(["item_cnt_month"], axis=1).sample(5)
+
+# Predicción
+response = predictor.predict(X_sample.values).decode("utf-8")
+print("Predicciones (unidades estimadas por mes):")
+print(response)
+
+# Limpieza del endpoint al terminar
+sess.delete_endpoint(predictor.endpoint)
+```
+
+---
+
+### Flujo completo SageMaker
+
+```
+S3 (datos_entreno.parquet, datos_validacion.parquet)
+        │
+        ▼
+bash build_and_push.sh <nombre-imagen>
+        │
+        ▼
+ECR (<account>.dkr.ecr.<region>.amazonaws.com/<nombre-imagen>:latest)
+        │
+        ▼
+SageMaker Training Job
+  docker run <image> train
+  -> lee /opt/ml/input/data/training/
+  -> entrena XGBRegressor
+  -> guarda /opt/ml/model/modelo_xgboost.joblib
+        │
+        ▼
+S3 (modelo_xgboost.joblib)
+        │
+        ▼
+SageMaker Endpoint
+  docker run <image> serve
+  -> nginx + gunicorn + Flask
+  -> POST /invocations (text/csv) → predicciones CSV
+```
+
+---
+
 **Última actualización:** Marzo 2026
 
 
