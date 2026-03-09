@@ -29,8 +29,8 @@ Desarrollar un modelo escalable, testeable y containerizado que permita:
 - **Fuente:** Kaggle — [Predict Future Sales](https://www.kaggle.com/c/competitive-data-science-predict-future-sales)
 - **Métricas de desempeño:**
   - RMSE Regresión Lineal (baseline): 0.9824
-  - RMSE Random Forest (principal): 0.9743
-  - **Mejora:** ~0.83% respecto al baseline
+  - RMSE Random Forest: 0.9743 — mejora ~0.83% vs baseline
+  - **RMSE XGBoost (SageMaker BYOC): 0.9474 — mejora ~3.56% vs baseline**
 
 ---
 
@@ -73,9 +73,15 @@ Desarrollar un modelo escalable, testeable y containerizado que permita:
 │   │
 │   ├── training/                        # Módulo de entrenamiento
 │   │   ├── __init__.py
-│   │   ├── Dockerfile                   # Imagen Docker para entrenamiento
+│   │   ├── Dockerfile                   # Imagen Docker (local y SageMaker BYOC)
 │   │   ├── __main__.py                  # CLI con argparse
-│   │   ├── train.py                     # Funciones puras de modelado
+│   │   ├── train.py                     # Funciones puras de modelado (local)
+│   │   ├── train                        # Script de entrenamiento SageMaker BYOC
+│   │   ├── serve                        # Arranca nginx + gunicorn para inferencia
+│   │   ├── predictor.py                 # Servidor Flask (/ping, /invocations)
+│   │   ├── wsgi.py                      # Punto de entrada WSGI para gunicorn
+│   │   ├── nginx.conf                   # Configuración del proxy reverso
+│   │   ├── build_and_push.sh            # Build y push de la imagen a ECR
 │   │   └── test/
 │   │       ├── __init__.py
 │   │       └── test_train.py            # Tests unitarios
@@ -90,7 +96,8 @@ Desarrollar un modelo escalable, testeable y containerizado que permita:
 │           └── test_inference.py        # Tests unitarios
 │
 ├── notebooks/                           # Exploración y análisis
-│   └── modelo_retail.ipynb
+│   ├── modelo_retail.ipynb              # Análisis exploratorio y modelado local
+│   └── sagemaker_xgboost.ipynb         # Pipeline completo BYOC en SageMaker
 │
 └── notes/                               # Documentación interna
     ├── buenas_practicas.md
@@ -109,7 +116,11 @@ Desarrollar un modelo escalable, testeable y containerizado que permita:
 
 ### Ramas de desarrollo: 
 - `development` Integración (rama activa de desarrollo)
-- `feature`.    Integración (rama activa de desarrollo)
+- `feature`     Integración (rama activa de desarrollo)
+- `feature/refactor-inference-module`  Integración (Rama de desarrollo T04)
+- `feature/refactor-preprocessing-module`  Integración (Rama de desarrollo T04)
+- `feature/refactor-training-module`  Integración (Rama de desarrollo T04)
+- `feature/sagemaker-training-byoc` Integración (Rama de desarrollo sagemaker T05)
 
 ```bash
 git checkout -b feature/nombre-feature    # Rama para nuevas funcionalidades
@@ -680,6 +691,10 @@ La imagen resultante queda en:
 <account>.dkr.ecr.<region>.amazonaws.com/<nombre-imagen>:latest
 ```
 
+Imagen desplegada en ECR: sagemaker-xgboost-byoc
+
+![alt text](image-11.png)
+
 > **Nota:** El flag `--network sagemaker` en el build es requerido si ejecutas desde SageMaker Studio.
 
 ---
@@ -759,6 +774,10 @@ SageMaker ejecuta `docker run <image> serve`, que levanta el stack:
 SageMaker → nginx (proxy reverso) → gunicorn (socket Unix) → Flask (predictor.py)
 ```
 
+Endpoint Desplegado:
+
+![alt text](src/training/endpoint_01.png)
+
 #### Variables de entorno del servidor
 
 | Variable | Default | Descripción |
@@ -809,6 +828,8 @@ print(response)
 sess.delete_endpoint(predictor.endpoint)
 ```
 
+![alt text](image-12.png)
+
 ---
 
 ### Flujo completo SageMaker
@@ -838,6 +859,26 @@ SageMaker Endpoint
   -> nginx + gunicorn + Flask
   -> POST /invocations (text/csv) → predicciones CSV
 ```
+
+### Resultados del Training Job
+
+**RMSE XGBoost (SageMaker BYOC): 0.9474**
+
+![alt text](image-13.png)
+
+### Predicciones en tiempo real
+
+Muestra de 5 predicciones obtenidas desde el endpoint desplegado (unidades estimadas por mes):
+
+```
+0.04183979
+0.22184074
+0.24271674
+0.044277634
+0.26082158
+```
+
+![alt text](image-12.png)
 
 ---
 
