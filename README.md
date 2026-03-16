@@ -56,6 +56,13 @@ Desarrollar un modelo escalable, testeable y containerizado que permita:
 │   └── documentation/
 │       └── Executive_Summary.pdf
 │
+├── processing/
+|   ├── container/
+│   |   ├── Dockerfile                   # Imagen Docker para preprocessing BYOC
+│   |   └── preprocess.py                # Funciones puras de transformación BYOC
+|   └── notebooks
+|       └── sagemaker_byok_sklearn.ipynb # Pipeline completo BYOC en SageMaker con sklearn
+|
 ├── src/                                 # Código fuente modular
 │   ├── utils/                           # Utilidades compartidas
 │   │   ├── __init__.py
@@ -879,6 +886,69 @@ Muestra de 5 predicciones obtenidas desde el endpoint desplegado (unidades estim
 ```
 
 ![alt text](image-12.png)
+
+---
+## SageMaker Processing Job — BYOC con scikit-learn
+
+Esta sección documenta el flujo de preprocesamiento de datos utilizando **Amazon SageMaker Processing** con un contenedor propio (Bring Your Own Container) con scikit-learn.
+
+| Archivo | Descripción |
+|---------|-------------|
+| `processing/container/Dockerfile` | Imagen Docker ligera basada en `python:3.11-slim` con dependencias de procesamiento |
+| `processing/container/preprocess.py` | Script de transformación ejecutado por `ScriptProcessor` |
+| `processing/notebooks/sagemaker_processing.ipynb` | Notebook cpn el proceso end to end para ejecución.
+---
+
+### Descripción del preprocesamiento
+
+1. **Lectura y limpieza:** Integración de los catálogos (`items_en.csv`, `item_categories_en.csv`, `shops_en.csv`) con el histórico de ventas (`sales_train.csv`). Se aplican filtros para eliminar outliers:
+   - Precios negativos (`<= 0`)
+   - Precios atípicos (`>= 100,000`)
+   - Ventas diarias atípicas (`>= 1,000`)
+2. **Consolidación:** Creación de una matriz base con todas las combinaciones posibles de `mes-tienda-item`. Las ventas diarias se agrupan a nivel mensual (`item_cnt_month`) y se topan a un máximo de 20 unidades para estabilizar la varianza.
+3. **Ingeniería de variables:** Generación de variables históricas (lags) integrando las ventas de los meses anteriores al registro actual.
+4. **División temporal de los datos::** Divide el dataset cronológicamente con el número de mes (entrenamiento <33, validación=33, inferencia=34).
+5. **Output:** guarda 3 archivos en formato .parquet (datos_entreno.parquet, datos_validacion.parquet y datos_inferencia.parquet) en la ruta /opt/ml/processing/output/ .
+---
+## Flujo Completo SageMaker Processing
+
+```text
+S3 (datos brutos: sales_train.csv, test.csv, catálogos, etc.)
+        │
+        ▼
+Construcción de docker, push y autenticación en AWS
+        │
+        ▼
+SageMaker ScriptProcessor
+  -> Descarga inputs a /opt/ml/processing/input/
+  -> Ejecuta: preprocess.py
+  -> Guarda parquet en /opt/ml/processing/output/
+        │
+        ▼
+S3 (datos_entreno.parquet, datos_validacion.parquet, datos_inferencia.parquet)
+```
+---
+## Evidencias de ejecución
+
+1. Imagen desplegada en ECR: **sagemaker_sklearn_preprocess**
+
+![alt text](processing/docker_image_prep.png)
+
+2. Processing Job en exitoso
+   
+![alt text](processing/job_completed.png)
+
+3. Output en S3
+
+![alt text](processing/output.png)
+
+4. Inspección del output
+   
+![alt text](processing/out_train.png)
+
+![alt text](processing/out_val.png)
+
+![alt text](processing/out_inf.png)
 
 ---
 
