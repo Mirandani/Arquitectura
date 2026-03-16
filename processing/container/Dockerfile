@@ -10,6 +10,7 @@ ENV PYTHONIOENCODING UTF-8
 RUN pip install --no-cache-dir \
     numpy==2.4.2 \
     pandas==3.0.0 \
+    pyarrow>=23.0.0 \
     scikit-learn==1.8.0
 
 # por que no ponemos mas cosas en el Dockerfile?
