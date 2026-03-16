@@ -912,20 +912,21 @@ Esta sección documenta el flujo de preprocesamiento de datos utilizando **Amazo
 ---
 ## Flujo Completo SageMaker Processing
 
-S3 (datos brutos:sales_train.csv, test.csv, catálogos, etc.)
-│
-▼
+```text
+S3 (datos brutos: sales_train.csv, test.csv, catálogos, etc.)
+        │
+        ▼
 Construcción de docker, push y autenticación en AWS
-│
-▼
+        │
+        ▼
 SageMaker ScriptProcessor
--> Descarga inputs a /opt/ml/processing/input/
--> Ejecuta preprocess.py
--> Guarda parquet en /opt/ml/processing/output/
-│
-▼
+  -> Descarga inputs a /opt/ml/processing/input/
+  -> Ejecuta: preprocess.py
+  -> Guarda parquet en /opt/ml/processing/output/
+        │
+        ▼
 S3 (datos_entreno.parquet, datos_validacion.parquet, datos_inferencia.parquet)
-
+```
 ---
 ## Evidencias de ejecución
 
