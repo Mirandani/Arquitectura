@@ -128,10 +128,10 @@ def main(input_path, output_path):
     path_train = os.path.join(input_path, "sales_train.csv")
     path_test = os.path.join(input_path, "test.csv")
     
-    # Construir rutas de salida
-    path_out_train = os.path.join(output_path, "datos_entreno.parquet")
-    path_out_val = os.path.join(output_path, "datos_validacion.parquet")
-    path_out_infer = os.path.join(output_path, "datos_inferencia.parquet")
+    # Construir rutas de salida en carpetas separadas
+    path_out_train = os.path.join(output_path, "train", "datos_entreno.parquet")
+    path_out_val = os.path.join(output_path, "validation", "datos_validacion.parquet")
+    path_out_infer = os.path.join(output_path, "test", "datos_inferencia.parquet")
     
     # Crear directorio de salida si no existe
     os.makedirs(output_path, exist_ok=True)
