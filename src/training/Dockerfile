@@ -1,6 +1,7 @@
 # --------------------------------------------------------------------------
 # Base image
 # Ubuntu 22.04 provee un entorno Linux robusto con Python 3.10
+# Dockerfile de entrenamiento para SageMaker - Tarea 05
 # --------------------------------------------------------------------------
 FROM ubuntu:22.04
 

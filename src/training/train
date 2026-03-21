@@ -2,8 +2,8 @@
 # Script de entrenamiento para SageMaker BYOC.
 #
 # SageMaker invoca este script ejecutando: docker run <image> train
-# El script lee los datos de entrenamiento, entrena modelos (XGBoost principal)
-# y guarda el modelo serializado en /opt/ml/model/.
+# El script lee los datos preprocesados de dos canales separados (train y validation),
+# entrena modelos (XGBoost principal) y guarda el modelo serializado en /opt/ml/model/.
 #
 # Estructura de inputs esperada en el filesystem del container:
 #
@@ -12,8 +12,10 @@
 #   │   ├── config/
 #   │   │   └── hyperparameters.json   # todos los valores son strings
 #   │   └── data/
-#   │       └── training/
-#   │           └── *.parquet          # Archivos parquet de datos.
+#   │       ├── train/
+#   │       │   └── datos_entreno.parquet    # Del canal 'train'
+#   │       └── validation/
+#   │           └── datos_validacion.parquet # Del canal 'validation'
 #   ├── model/                         # Aquí se escribe el modelo entrenado (.joblib)
 #   └── output/
 #       └── failure                    # Se escribe aquí si el training falla (lo lee SageMaker)
@@ -43,9 +45,10 @@ output_path = os.path.join(prefix, 'output')
 model_path = os.path.join(prefix, 'model')
 param_path = os.path.join(prefix, 'input/config/hyperparameters.json')
 
-# SageMaker copia los datos del channel 'training' a este directorio (File mode).
-channel_name='training'
-training_path = os.path.join(input_path, channel_name)
+# SageMaker monta los canales 'train' y 'validation' en directorios separados.
+# TrainingStep pasará dos canales: 'train' y 'validation'
+train_channel = os.path.join(input_path, 'train')
+validation_channel = os.path.join(input_path, 'validation')
 
 MODELOS_DISPONIBLES = ["random_forest", "linear", "xgboost"]
 
@@ -91,13 +94,18 @@ def train():
                 val = trainingParams["max_depth"]
                 max_depth = None if val == "None" else int(val)
 
-        # Cargar datos. 
-        archivo_entreno = os.path.join(training_path, "datos_entreno.parquet")
-        archivo_validacion = os.path.join(training_path, "datos_validacion.parquet")
+        # Cargar datos desde los canales 'train' y 'validation'.
+        # El TrainingStep pasará dos canales separados con los datos preprocesados.
+        archivo_entreno = os.path.join(train_channel, "datos_entreno.parquet")
+        archivo_validacion = os.path.join(validation_channel, "datos_validacion.parquet")
         
-        if not os.path.exists(archivo_entreno) or not os.path.exists(archivo_validacion):
-             raise ValueError(('No se encontraron los archivos parquet en {}.\n' +
-                              'This usually indicates that the channel ({}) was incorrectly specified.').format(training_path, channel_name))
+        if not os.path.exists(archivo_entreno):
+            raise FileNotFoundError(f'No se encontró archivo de entrenamiento en {archivo_entreno}. '
+                                    'Verifica que el canal "train" esté correctamente configurado.')
+        
+        if not os.path.exists(archivo_validacion):
+            raise FileNotFoundError(f'No se encontró archivo de validación en {archivo_validacion}. '
+                                    'Verifica que el canal "validation" esté correctamente configurado.')
 
         datos_entrenamiento = pd.read_parquet(archivo_entreno)
         datos_validacion = pd.read_parquet(archivo_validacion)
