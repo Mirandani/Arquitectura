@@ -35,8 +35,9 @@ if __name__ == "__main__":
     print("Generando predicciones y calculando RMSE")
     predicciones = modelo.predict(X_test)
     
-    # Cálculo rmse
-    rmse = mean_squared_error(y_test, predicciones, squared=False)
+    # Cálculo rmse y std
+    mse = mean_squared_error(y_test, predicciones)
+    rmse = mse ** 0.5
     std = np.std(y_test - predicciones)
     print(f"RMSE calculado: {rmse:.4f}")
     

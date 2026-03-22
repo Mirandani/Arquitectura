@@ -140,7 +140,7 @@ def main(input_path, output_path):
         # ====================================================================
         # 1. LECTURA DE DATOS
         # ====================================================================
-        logger.info("\n[1/6] Cargando datasets raw...")
+        logger.info("\n[1/7] Cargando datasets raw...")
         
         # Verificar que todos los archivos existan
         required_files = {
@@ -179,7 +179,7 @@ def main(input_path, output_path):
         # ====================================================================
         # 2. LIMPIEZA DE DATOS
         # ====================================================================
-        logger.info("\n[2/6] Limpiando datos...")
+        logger.info("\n[2/7] Limpiando datos...")
         
         filas_antes = len(datos_entrenamiento)
         
@@ -202,7 +202,7 @@ def main(input_path, output_path):
         # ====================================================================
         # 3. CONSOLIDACIÓN: MATRIZ MES -> TIENDA -> PRODUCTO -> VENTAS
         # ====================================================================
-        logger.info("\n[3/6] Generando grid base (mes-tienda-item)...")
+        logger.info("\n[3/7] Generando grid base (mes-tienda-item)...")
         
         matriz_ventas = generar_grid_base(datos_entrenamiento)
         matriz_ventas = matriz_ventas.pipe(optimizar_tipos).sort_values(
@@ -235,7 +235,7 @@ def main(input_path, output_path):
         # ====================================================================
         # 4. INTEGRAR DATOS DE PRUEBA
         # ====================================================================
-        logger.info("\n[4/6] Integrando datos de prueba...")
+        logger.info("\n[4/7] Integrando datos de prueba...")
         
         datos_prueba = pd.read_csv(path_test).assign(
             date_block_num=34
@@ -252,7 +252,7 @@ def main(input_path, output_path):
         # ====================================================================
         # 5. AGREGAR VARIABLES DE HISTORIA
         # ====================================================================
-        logger.info("\n[5/6] Generando variables de historia (meses anteriores)...")
+        logger.info("\n[5/7] Generando variables de historia (meses anteriores)...")
         
         matriz_ventas = matriz_ventas.pipe(
             agregar_historia, 
@@ -284,7 +284,7 @@ def main(input_path, output_path):
         # ====================================================================
         # 6. GUARDAR DATASETS
         # ====================================================================
-        logger.info("\n[6/6] Guardando datasets procesados...")
+        logger.info("\n[6/7] Guardando datasets procesados...")
         
         df_train = matriz_ventas[matriz_ventas.date_block_num < 33]
         df_val = matriz_ventas[matriz_ventas.date_block_num == 33]
@@ -293,6 +293,19 @@ def main(input_path, output_path):
         guardar_dataset(df_train, path_out_train)
         guardar_dataset(df_val, path_out_val)
         guardar_dataset(df_infer, path_out_infer)
+
+        logger.info("\n[7/7] Guardando CSV puro para Batch Transform...")
+        
+        path_out_infer_csv_dir = os.path.join(output_path, "test_csv")
+        os.makedirs(path_out_infer_csv_dir, exist_ok=True)
+        path_out_infer_csv = os.path.join(path_out_infer_csv_dir, "inferencia.csv")
+        
+        # Quitar la variable a predecir (item_cnt_month)
+        X_inferencia = df_infer.drop(columns=["item_cnt_month"], errors="ignore")
+        
+        # Quitar índice y encabezados
+        X_inferencia.to_csv(path_out_infer_csv, index=False, header=False)
+        logger.info(f"  - Inferencia CSV (sin target): {X_inferencia.shape} → {path_out_infer_csv}")
         
         # Resumen final
         duration = time.time() - start_time
