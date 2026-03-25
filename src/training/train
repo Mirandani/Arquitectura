@@ -43,9 +43,6 @@ output_path = os.path.join(prefix, 'output')
 model_path = os.path.join(prefix, 'model')
 param_path = os.path.join(prefix, 'input/config/hyperparameters.json')
 
-# SageMaker copia los datos del channel 'training' a este directorio (File mode).
-channel_name='training'
-training_path = os.path.join(input_path, channel_name)
 
 MODELOS_DISPONIBLES = ["random_forest", "linear", "xgboost"]
 
@@ -91,13 +88,17 @@ def train():
                 val = trainingParams["max_depth"]
                 max_depth = None if val == "None" else int(val)
 
-        # Cargar datos. 
-        archivo_entreno = os.path.join(training_path, "datos_entreno.parquet")
-        archivo_validacion = os.path.join(training_path, "datos_validacion.parquet")
+        # Datos en canales separados
+        train_path = os.path.join(input_path, 'train')
+        validation_path = os.path.join(input_path, 'validation')
+        
+        archivo_entreno = os.path.join(train_path, "datos_entreno.parquet")
+        archivo_validacion = os.path.join(validation_path, "datos_validacion.parquet")
         
         if not os.path.exists(archivo_entreno) or not os.path.exists(archivo_validacion):
-             raise ValueError(('No se encontraron los archivos parquet en {}.\n' +
-                              'This usually indicates that the channel ({}) was incorrectly specified.').format(training_path, channel_name))
+            raise ValueError(('No se encontraron los archivos parquet.\n' +
+                              f'Ruta entreno esperada: {archivo_entreno}\n' +
+                              f'Ruta validacion esperada: {archivo_validacion}'))
 
         datos_entrenamiento = pd.read_parquet(archivo_entreno)
         datos_validacion = pd.read_parquet(archivo_validacion)

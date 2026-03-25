@@ -11,6 +11,8 @@ RUN pip install --no-cache-dir \
     numpy==2.4.2 \
     pandas==3.0.0 \
     pyarrow>=23.0.0 \
-    scikit-learn==1.8.0
+    scikit-learn==1.8.0 \
+    xgboost==2.0.3 \
+    joblib==1.3.2
 
-# por que no ponemos mas cosas en el Dockerfile?
+# para pipeline end to end se agregaron xgboost y joblib
