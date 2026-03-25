@@ -952,6 +952,171 @@ S3 (datos_entreno.parquet, datos_validacion.parquet, datos_inferencia.parquet)
 
 ---
 
-**Última actualización:** Marzo 2026
+**Última actualización:** Marzo 2026 - Tarea 07: SageMaker Pipelines — BYOC End-to-End
+
+---
+
+## SageMaker Pipelines — BYOC End-to-End
+
+Esta sección documenta el pipeline de ML orquestado con **Amazon SageMaker Pipelines**, usando exclusivamente los contenedores BYOC construidos en tareas anteriores. El pipeline es reproducible, parametrizable y completamente auditado en el Model Registry.
+
+### Archivos involucrados
+
+| Archivo | Descripción |
+|---------|-------------|
+| `notebooks/sagemaker_pipeline.ipynb` | Notebook con el flujo completo de los 8 steps del pipeline |
+| `processing/container/Dockerfile` | Imagen BYOC reutilizada para preprocessing **y** evaluación |
+| `processing/container/preprocess.py` | Script de feature engineering ejecutado en el ProcessingStep de preprocesamiento |
+| `processing/container/evaluate.py` | Script de evaluación que escribe `evaluation.json` con RMSE y desviación estándar |
+| `src/training/Dockerfile` | Imagen BYOC usada para entrenamiento, creación de modelo, Batch Transform y registro |
+| `src/training/train` | Script de entrenamiento XGBoost ejecutado por SageMaker |
+
+---
+
+### Contenedores BYOC utilizados
+
+| Step | Contenedor |
+|------|-----------|
+| Preprocessing | `sagemaker_sklearn_preprocess` (ECR) — mismo de Tarea 06 |
+| Training | `sagemaker-xgboost-byoc` (ECR) — mismo de Tarea 05 |
+| Evaluation | `sagemaker_sklearn_preprocess` (ECR) — **reutilizado** con `evaluate.py` |
+| Create Model | `sagemaker-xgboost-byoc` (ECR) — imagen de serving |
+| Batch Transform | `sagemaker-xgboost-byoc` (ECR) — imagen de serving |
+| Register Model | `sagemaker-xgboost-byoc` (ECR) — imagen de serving |
+
+---
+
+### Diagrama de los 8 steps del pipeline
+
+```
+                     ┌─────────────────────────┐
+                     │   ProcessingStep         │
+                     │   preprocessing          │
+                     │   BYOC: sklearn_preproc  │
+                     │   → train/, val/, test/  │
+                     │     test_csv/            │
+                     └────────────┬────────────┘
+                                  │
+                     ┌────────────▼────────────┐
+                     │   TrainingStep           │
+                     │   training               │
+                     │   BYOC: xgboost-byoc     │
+                     │   → modelo_xgboost.joblib│
+                     └────────────┬────────────┘
+                                  │
+                     ┌────────────▼────────────┐
+                     │   ProcessingStep         │
+                     │   evaluation             │
+                     │   BYOC: sklearn_preproc  │
+                     │   → evaluation.json      │
+                     └────────────┬────────────┘
+                                  │
+                     ┌────────────▼────────────┐
+                     │   ConditionStep          │
+                     │   rmse < umbral          │
+                     └────┬──────────┬─────────┘
+              (True)       │          │  (False)
+      ┌───────────────────▼┐        ┌▼────────────────┐
+      │  ModelStep          │        │  FailStep        │
+      │  create_model       │        │  pipeline_failed │
+      └──────────┬──────────┘        └──────────────────┘
+                 │
+      ┌──────────▼──────────┐
+      │  TransformStep       │
+      │  batch_transform     │
+      │  → predicciones S3   │
+      └──────────┬──────────┘
+                 │
+      ┌──────────▼──────────┐
+      │  ModelStep           │
+      │  register_model      │
+      │  → Model Registry    │
+      └─────────────────────┘
+```
+
+---
+
+### Descripción de cada step
+
+| # | Step | Tipo | Descripción |
+|---|------|------|-------------|
+| 1 | `preprocessing` | `ProcessingStep` | Feature engineering: limpieza, grid mes-tienda-item, variables de historia, split temporal. Genera 4 outputs: `train/`, `validation/`, `test/`, `test_csv/` |
+| 2 | `training` | `TrainingStep` | Entrena `XGBRegressor` con canales separados `train` y `validation`. Guarda `modelo_xgboost.joblib` en S3 |
+| 3 | `evaluation` | `ProcessingStep` | Carga el modelo y los datos de test, calcula RMSE y desviación estándar, escribe `evaluation.json` |
+| 4 | `condition` | `ConditionStep` | Evalúa si `rmse < umbral`. Si se cumple, continúa el pipeline; si no, ejecuta el FailStep |
+| 5 | `fail` | `FailStep` | Termina el pipeline con estado `Failed` y mensaje descriptivo cuando la métrica no supera el umbral |
+| 6 | `create_model` | `ModelStep` | Registra el artefacto del modelo entrenado como recurso `Model` en SageMaker |
+| 7 | `batch_transform` | `TransformStep` | Genera predicciones en batch sobre el CSV de inferencia usando el modelo creado |
+| 8 | `register_model` | `ModelStep` | Registra el modelo en el **Model Registry** con las métricas de evaluación y estado de aprobación |
+
+---
+
+### Script de evaluación (`evaluate.py`)
+
+El script reutiliza el contenedor BYOC de preprocessing e implementa el siguiente flujo:
+
+1. Extrae el modelo desde `model.tar.gz` en `/opt/ml/processing/model/`
+2. Carga los datos de test desde `/opt/ml/processing/test/datos_inferencia.parquet`
+3. Calcula RMSE y desviación estándar
+4. Escribe `/opt/ml/processing/evaluation/evaluation.json`:
+
+```json
+{
+  "regression_metrics": {
+    "rmse": {
+      "value": 0.9474,
+      "standard_deviation": 1.234
+    }
+  }
+}
+```
+
+---
+
+### Evidencias de ejecución
+
+#### 1. Pipeline ejecutado exitosamente
+
+![Pipeline Succeeded](succeeded_sagemaker_pipeline.png)
+
+#### 2. Modelo registrado en el Model Registry
+
+![Model Registry](model_register.png)
+
+#### 3. Output del Batch Transform en S3
+
+![Batch Transform Output](batch_transform_output.png)
+
+---
+
+### Flujo completo SageMaker Pipeline
+
+```
+S3 (datos crudos: CSVs de ventas, items, categorías, tiendas)
+        │
+        ▼
+ProcessingStep (preprocessing) — BYOC: sagemaker_sklearn_preprocess
+  → /opt/ml/processing/output/train/datos_entreno.parquet
+  → /opt/ml/processing/output/validation/datos_validacion.parquet
+  → /opt/ml/processing/output/test/datos_inferencia.parquet
+  → /opt/ml/processing/output/test_csv/inferencia.csv
+        │
+        ▼
+TrainingStep — BYOC: sagemaker-xgboost-byoc
+  → /opt/ml/model/modelo_xgboost.joblib  →  S3 (model.tar.gz)
+        │
+        ▼
+ProcessingStep (evaluation) — BYOC: sagemaker_sklearn_preprocess
+  → /opt/ml/processing/evaluation/evaluation.json
+        │
+        ▼
+ConditionStep (rmse < umbral)
+  ├── [True]  → ModelStep (create) → TransformStep → ModelStep (register)
+  └── [False] → FailStep
+        │
+        ▼ (si True)
+Model Registry (modelo aprobado + métricas)
+S3 (predicciones en batch)
+```
 
 
